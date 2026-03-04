@@ -25,15 +25,17 @@ module ex_mem_reg(
            input rst_n,
 
            // MEM 阶段用
-           input  wire        ex_mem_write,
-           input  wire        ex_mem_read,
+           input  ex_mem_write,
+           input  ex_mem_read,
            // WB 阶段用
-           input  wire        ex_reg_write,
-           input  wire        ex_mem_to_reg,
+           input  ex_reg_write,
+           input  ex_mem_to_reg,
 
-           input  wire [31:0] ex_alu_result,   // ALU 算出的结果 (也就是内存地址)
-           input  wire [31:0] ex_rs2_data,     // 准备写进内存的数据 (经过前递后的最新值)
-           input  wire [4:0]  ex_rd,           // 目标寄存器地址
+           input  [31:0] ex_alu_result,   // ALU 算出的结果 (也就是内存地址)
+           input  [31:0] ex_rs2_data,     // 准备写进内存的数据 (经过前递后的最新值)
+           input  [4:0]  ex_rd,           // 目标寄存器地址
+
+           input  [2:0] ex_funct3,
 
            output reg         mem_mem_write,
            output reg         mem_mem_read,
@@ -43,7 +45,9 @@ module ex_mem_reg(
 
            output reg  [31:0] mem_alu_result,
            output reg  [31:0] mem_wdata,       // Store 指令真正要写进内存的数据
-           output reg  [4:0]  mem_rd
+           output reg  [4:0]  mem_rd,
+
+           output reg  [2:0] mem_funct3
        );
 
 always @(posedge clk or negedge rst_n) begin
@@ -57,6 +61,7 @@ always @(posedge clk or negedge rst_n) begin
         mem_alu_result <= 32'd0;
         mem_wdata      <= 32'd0;
         mem_rd         <= 5'd0;
+        mem_funct3 <= 3'b0;
     end
     else begin
         // 正常流水线步进：把 EX 阶段的成果打包送到 MEM 阶段
@@ -69,6 +74,7 @@ always @(posedge clk or negedge rst_n) begin
         mem_alu_result <= ex_alu_result;
         mem_wdata      <= ex_rs2_data;
         mem_rd         <= ex_rd;
+        mem_funct3 <= ex_funct3;
     end
 end
 

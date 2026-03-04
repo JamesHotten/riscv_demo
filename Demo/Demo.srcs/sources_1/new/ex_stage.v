@@ -123,13 +123,17 @@ reg condition_met;
 always @(*) begin
     case (ex_funct3)
         3'b000:
-            condition_met = alu_zero;       // BEQ: 结果为0则跳
+            condition_met = (alu_in_a == alu_in_b);                  // BEQ: 相等则跳
         3'b001:
-            condition_met = ~alu_zero;      // BNE: 结果不为0则跳
+            condition_met = (alu_in_a != alu_in_b);                  // BNE: 不等则跳
         3'b100:
-            condition_met = alu_calc_out[31]; // BLT: 结果为负则跳 
+            condition_met = ($signed(alu_in_a) < $signed(alu_in_b)); // BLT: 有符号小于则跳
         3'b101:
-            condition_met = ~alu_calc_out[31];// BGE: 结果为正则跳
+            condition_met = ($signed(alu_in_a) >= $signed(alu_in_b));// BGE: 有符号大于等于则跳
+        3'b110:
+            condition_met = (alu_in_a < alu_in_b);                   // BLTU: 无符号小于则跳
+        3'b111:
+            condition_met = (alu_in_a >= alu_in_b);                  // BGEU: 无符号大于等于则跳
         default:
             condition_met = 1'b0;
     endcase

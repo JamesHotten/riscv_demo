@@ -23,8 +23,8 @@
 module dmem(
            input  clk,
 
-           input  we,
-           input re,
+           input  [3:0] we,
+           input  re,
 
            input [31:0] addr,
            input [31:0] wdata,
@@ -45,15 +45,22 @@ end // 仿真
 assign rdata = re ? mem[addr[31:2]] : 32'h0;
 
 always @(posedge clk) begin
-    if (we) begin
     // Test Begin
-        if (addr == 32'h10000000) begin
+    if (we != 4'b0000 && addr == 32'h10000000) begin
+        if (we[0])
             $write("%c", wdata[7:0]);
-        end
+    end
     // Test End
-        else begin
-            mem[addr[31:2]] <= wdata;
-        end
+    else begin
+        // 根据 4-bit 掩码，按字节写入
+        if (we[0])
+            mem[addr[31:2]][7:0]   <= wdata[7:0];
+        if (we[1])
+            mem[addr[31:2]][15:8]  <= wdata[15:8];
+        if (we[2])
+            mem[addr[31:2]][23:16] <= wdata[23:16];
+        if (we[3])
+            mem[addr[31:2]][31:24] <= wdata[31:24];
     end
 end
 

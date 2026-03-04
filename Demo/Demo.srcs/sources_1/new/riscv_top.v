@@ -104,6 +104,10 @@ wire        mem_mem_to_reg;
 
 //  MEM Stage Signals
 wire [31:0] mem_rdata;
+wire [2:0]  mem_funct3;
+wire [3:0]  dmem_we;
+wire [31:0] dmem_wdata_aligned;
+wire [31:0] dmem_rdata_raw;
 
 //  MEM/WB Register Signals
 wire [31:0] wb_alu_result;
@@ -297,6 +301,7 @@ ex_mem_reg u_ex_mem_reg (
                .ex_alu_result (ex_alu_result),
                .ex_rs2_data   (ex_rs2_forwarded),
                .ex_rd         (ex_rd),
+               .ex_funct3     (ex_funct3),
 
                .mem_mem_write (mem_mem_write),
                .mem_mem_read  (mem_mem_read),
@@ -304,17 +309,28 @@ ex_mem_reg u_ex_mem_reg (
                .mem_mem_to_reg(mem_mem_to_reg),
                .mem_alu_result(mem_alu_result),
                .mem_wdata     (mem_wdata),
-               .mem_rd        (mem_rd)
+               .mem_rd        (mem_rd),
+               .mem_funct3    (mem_funct3)
            );
 
 // Stage 4: MEM (访存)
+mem_ctrl u_mem_ctrl (
+             .funct3       (mem_funct3),
+             .addr         (mem_alu_result),
+             .wdata_in     (mem_wdata),
+             .mem_write_en (mem_mem_write),
+             .dmem_we      (dmem_we),
+             .dmem_wdata   (dmem_wdata_aligned),
+             .dmem_rdata   (dmem_rdata_raw),
+             .rdata_out    (mem_rdata) // 这个处理后的数据直接顺着你原有的线进入 mem_wb_reg
+         );
 dmem u_dmem (
          .clk  (clk),
-         .we   (mem_mem_write),
+         .we   (dmem_we),             // 改为使用 mem_ctrl 算出的 4-bit 掩码
          .re   (mem_mem_read),
          .addr (mem_alu_result),
-         .wdata(mem_wdata),
-         .rdata(mem_rdata)
+         .wdata(dmem_wdata_aligned),  // 改为使用 mem_ctrl 对齐后的数据
+         .rdata(dmem_rdata_raw)       // 读出的原始数据先交给 mem_ctrl 处理
      );
 
 // Pipe Reg: MEM/WB
