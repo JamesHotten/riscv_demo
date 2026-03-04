@@ -1,0 +1,22 @@
+Time resolution is 1 ps
+Simulation Start!
+Time                75000: Write Reg x1 = 00000001
+Time                85000: Write Reg x2 = ffffffff
+Time                95000: Write Reg x3 = 00000000
+Time               105000: Write Reg x4 = 00000001
+Time               115000: Write Reg x5 = ffffffff
+Time               125000: Write Reg x6 = 7fffffff
+Time               135000: Write Reg x8 = 00002000
+Time               145000: Write Reg x10 = 00000000
+Time               155000: Write Reg x11 = 00000005
+Time               165000: Write Reg x10 = 00000005
+Time               175000: Write Reg x11 = 00000004
+Time               215000: Write Reg x10 = 00000009
+Time               225000: Write Reg x11 = 00000003
+Time               245000: Write Reg x10 = 0000000c
+Time               255000: Write Reg x11 = 00000002
+Time               275000: Write Reg x10 = 0000000e
+Time               285000: Write Reg x11 = 00000001
+Time               305000: Write Reg x10 = 0000000f
+Time               315000: Write Reg x11 = 00000000
+Time               355000: Write Reg x30 = 000000aa
