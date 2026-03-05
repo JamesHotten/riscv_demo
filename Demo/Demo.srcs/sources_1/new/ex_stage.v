@@ -37,6 +37,12 @@ module ex_stage(
            input  ex_branch,
            input  ex_jump,
 
+           input         ex_is_csr,
+           input  [4:0]  ex_rs1,       // 用于获取 zimm 立即数
+           input  [31:0] csr_rdata,    // 从 csr_file 读出的旧数据
+           output reg        csr_we,   // 写 CSR 使能
+           output reg [31:0] csr_wdata,// 写进 CSR 的新数据
+
            // 前递数据
            input  [1:0]  forward_a,    // 00: 正常, 01: 来自WB阶段, 10: 来自MEM阶段
            input  [1:0]  forward_b,
@@ -106,7 +112,9 @@ alu u_alu(
 
 // PC + imm (用于 Branch 和 JAL)
 assign pc_plus_4 = ex_pc + 32'd4;
-assign alu_result = ex_jump ? pc_plus_4 : alu_calc_out;
+// assign alu_result = ex_jump ? pc_plus_4 : alu_calc_out;
+assign alu_result = ex_is_csr ? csr_rdata :
+       ex_jump   ? pc_plus_4 : alu_calc_out;
 
 // 1. 如果是无条件跳转 (JAL, JALR)，必定跳转 (ex_jump == 1)
 // 2. 如果是条件分支 (Branch)，并且 ALU 算出来的结果为 0 (相等，即 beq 成立)，则跳转。
@@ -141,4 +149,32 @@ end
 
 assign branch_en = ex_jump | (ex_branch & condition_met);
 
+// CSR 读写计算逻辑
+// ex_funct3[2] 为 1 时是立即数版本(CSR*I)，操作数直接是 5 位的 rs1 字段(零扩展)
+// ex_funct3[2] 为 0 时是寄存器版本，操作数是通用寄存器读出的值 (已前递)
+wire [31:0] csr_operand = ex_funct3[2] ? {27'b0, ex_rs1} : alu_in_a;
+
+always @(*) begin
+    csr_we = 1'b0;
+    csr_wdata = 32'b0;
+    if (ex_is_csr) begin
+        csr_we = 1'b1;
+        case (ex_funct3[1:0])
+            2'b01:
+                csr_wdata = csr_operand;                        // CSRRW / CSRRWI
+            2'b10: begin
+                csr_wdata = csr_rdata | csr_operand;        // CSRRS / CSRRSI
+                if (ex_rs1 == 5'b0)
+                    csr_we = 1'b0;          // 操作数为0时只读不写
+            end
+            2'b11: begin
+                csr_wdata = csr_rdata & ~csr_operand;       // CSRRC / CSRRCI
+                if (ex_rs1 == 5'b0)
+                    csr_we = 1'b0;          // 操作数为0时只读不写
+            end
+            default:
+                csr_we = 1'b0;
+        endcase
+    end
+end
 endmodule

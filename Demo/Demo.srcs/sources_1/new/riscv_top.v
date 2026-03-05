@@ -108,6 +108,14 @@ wire [2:0]  mem_funct3;
 wire [3:0]  dmem_we;
 wire [31:0] dmem_wdata_aligned;
 wire [31:0] dmem_rdata_raw;
+wire [31:0] dmem_rdata_actual;
+
+// 只要内存地址前缀是 0x0200，说明要访问 CLINT 定时器，否则访问 DMEM 数据内存
+wire is_clint = (mem_alu_result[31:16] == 16'h0200);
+
+wire clint_we = mem_mem_write && is_clint;
+wire timer_irq;
+wire [31:0] clint_rdata;
 
 //  MEM/WB Register Signals
 wire [31:0] wb_alu_result;
@@ -120,14 +128,34 @@ wire        wb_mem_to_reg;
 // 预测器信号
 wire        pred_taken_id; // 从 if_id_reg 输出
 wire        pred_taken_ex; // 从 id_ex_reg 输出
+wire        pred_taken_if;
+wire [31:0] pred_target_if;
 
 // 修正信号
 wire        mispredict;
-wire [31:0] pc_next;      // 传给 pc_reg
-wire [31:0] correct_pc;   // EX 阶段计算出的正确地址
 
 //  WB Stage Signals
 wire [31:0] wb_final_data;
+
+//System Signals
+
+wire        id_is_csr;
+wire        id_ecall;
+wire        id_mret;
+wire [11:0] id_csr_addr = id_instr[31:20]; // CSR 地址直接从指令中截取
+
+wire        ex_is_csr;
+wire        ex_ecall;
+wire        ex_mret;
+wire [11:0] ex_csr_addr;
+
+wire [31:0] csr_rdata;
+wire        csr_we;
+wire [31:0] csr_wdata;
+wire [31:0] mepc_out;
+wire [31:0] mtvec_out;
+wire        mie_out;
+wire        irq_trap;
 
 hazard_detection_unit u_hazard_detect (
                           .id_rs1      (id_rs1),
@@ -140,7 +168,11 @@ hazard_detection_unit u_hazard_detect (
                           .stall_if    (stall_if),
                           .stall_id    (stall_id),
                           .flush_id    (flush_id),
-                          .flush_ex    (flush_ex)
+                          .flush_ex    (flush_ex),
+
+                          .ex_ecall(ex_ecall),
+                          .ex_mret(ex_mret),
+                          .irq_trap(irq_trap)
                       );
 
 forwarding_unit u_forwarding (
@@ -155,15 +187,31 @@ forwarding_unit u_forwarding (
                 );
 
 // Stage 1: IF (取指)
-pc_reg u_pc_reg (
-           .clk          (clk),
-           .rst_n        (rst_n),
-           .stall_if     (stall_if),
-           //    .branch_en    (ex_branch_taken), // 这里的信号来自 EX 级
-           //    .branch_target(ex_target_addr),   // 这里的地址来自 EX 级
-           .next_pc    (pc_next),
-           .pc           (if_pc)
-       );
+if_stage u_if_stage (
+             .clk             (clk),
+             .rst_n           (rst_n),
+             .stall_if        (stall_if),
+
+             // 预测器传入
+             .pred_taken_if   (pred_taken_if),
+             .pred_target_if  (pred_target_if),
+
+             // EX 级反馈
+             .ex_is_branch    (ex_branch || ex_jump),
+             .ex_branch_taken (ex_branch_taken),
+             .ex_target_addr  (ex_target_addr),
+             .pred_taken_ex   (pred_taken_ex),
+             .ex_pc           (ex_pc),
+
+             .if_pc           (if_pc),
+             .mispredict      (mispredict),
+
+             .ex_ecall(ex_ecall),
+             .ex_mret(ex_mret),
+             .mtvec_out(mtvec_out),
+             .mepc_out(mepc_out),
+             .irq_trap(irq_trap)
+         );
 
 imem u_imem (
          .pc   (if_pc),
@@ -215,7 +263,10 @@ ctrl_unit u_ctrl_unit (
               .branch    (id_branch),
               .jump      (id_jump),
               .reg_write (id_reg_write),
-              .mem_to_reg(id_mem_to_reg)
+              .mem_to_reg(id_mem_to_reg),
+              .is_csr     (id_is_csr),
+              .ecall      (id_ecall),
+              .mret       (id_mret)
           );
 
 // Pipe Reg: ID/EX
@@ -245,6 +296,11 @@ id_ex_reg u_id_ex_reg (
               .pred_taken_id(pred_taken_id),
               .pred_taken_ex(pred_taken_ex),
 
+              .id_is_csr   (id_is_csr),
+              .id_ecall    (id_ecall),
+              .id_mret     (id_mret),
+              .id_csr_addr (id_csr_addr),
+
               // Outputs...
               .ex_alu_src_a (ex_alu_src_a),
               .ex_alu_src_b (ex_alu_src_b),
@@ -264,7 +320,12 @@ id_ex_reg u_id_ex_reg (
               .ex_rd        (ex_rd),
 
               .id_funct3(id_funct3),
-              .ex_funct3(ex_funct3)
+              .ex_funct3(ex_funct3),
+
+              .ex_is_csr   (ex_is_csr),
+              .ex_ecall    (ex_ecall),
+              .ex_mret     (ex_mret),
+              .ex_csr_addr (ex_csr_addr)
           );
 
 // Stage 3: EX (执行)
@@ -287,7 +348,13 @@ ex_stage u_ex_stage (
              .forward_rs2_out(ex_rs2_forwarded),
              .branch_en      (ex_branch_taken),
              .ex_funct3(ex_funct3),
-             .branch_target  (ex_target_addr)
+             .branch_target  (ex_target_addr),
+
+             .ex_is_csr(ex_is_csr),
+             .ex_rs1(ex_rs1),
+             .csr_rdata(csr_rdata),
+             .csr_we(csr_we),
+             .csr_wdata(csr_wdata)
          );
 
 // Pipe Reg: EX/MEM
@@ -321,17 +388,28 @@ mem_ctrl u_mem_ctrl (
              .mem_write_en (mem_mem_write),
              .dmem_we      (dmem_we),
              .dmem_wdata   (dmem_wdata_aligned),
-             .dmem_rdata   (dmem_rdata_raw),
+             .dmem_rdata   (dmem_rdata_bus),
              .rdata_out    (mem_rdata) // 这个处理后的数据直接顺着你原有的线进入 mem_wb_reg
          );
+
 dmem u_dmem (
          .clk  (clk),
-         .we   (dmem_we),             // 改为使用 mem_ctrl 算出的 4-bit 掩码
-         .re   (mem_mem_read),
+         .we   (is_clint ? 4'b0000 : dmem_we), // 如果是访问 CLINT，屏蔽 DMEM 的写信号
+         .re   (mem_mem_read && !is_clint),    // 如果是访问 CLINT，屏蔽 DMEM 的读信号
          .addr (mem_alu_result),
          .wdata(dmem_wdata_aligned),  // 改为使用 mem_ctrl 对齐后的数据
-         .rdata(dmem_rdata_raw)       // 读出的原始数据先交给 mem_ctrl 处理
+         .rdata(dmem_rdata_actual)       // 读出的原始数据先交给 mem_ctrl 处理
      );
+
+clint u_clint (
+          .clk      (clk),
+          .rst_n    (rst_n),
+          .mem_addr (mem_alu_result),
+          .mem_wdata(mem_wdata),      // 原始写数据直接给 CLINT
+          .mem_we   (clint_we),
+          .mem_rdata(clint_rdata),
+          .timer_irq(timer_irq)
+      );
 
 // Pipe Reg: MEM/WB
 mem_wb_reg u_mem_wb_reg (
@@ -358,10 +436,7 @@ wb_stage u_wb_stage (
              .wb_final_data(wb_final_data)
          );
 
-// dynamic predictor
-wire        pred_taken_if;
-wire [31:0] pred_target_if;
-
+// 预测模块
 branch_predictor u_bp (
                      .clk(clk),
                      .rst_n(rst_n),
@@ -376,17 +451,28 @@ branch_predictor u_bp (
                      .ex_actual_target(ex_target_addr)    // 实际目标 (EX 阶段计算出的)
                  );
 
-// 如果实际应该跳(ex_branch_taken)，则去目标地址；否则去 ex_pc + 4
-assign correct_pc = ex_branch_taken ? ex_target_addr : (ex_pc + 4);
+csr_file u_csr (
+             .clk        (clk),
+             .rst_n      (rst_n),
 
-// 2. 判断是否预测错误 (Mispredict)
-// 情况：(预测跳但实际没跳) OR (预测没跳但实际跳了)
-// 注意：这里简化处理，假设预测的目标地址总是对的（BTB hit时）。如果想更严谨，还要比较地址。
-assign mispredict = (ex_branch || ex_jump) && (pred_taken_ex != ex_branch_taken);
+             // CSR 读写通道
+             .csr_addr   (ex_csr_addr),
+             .csr_we     (csr_we),
+             .csr_wdata  (csr_wdata),
+             .csr_rdata  (csr_rdata),
 
-// 3. PC 最终选择逻辑 (优先级：修正 > 预测 > 顺序)
-assign pc_next = mispredict    ? correct_pc :     // 只要EX阶段发现错了，立刻修正
-       pred_taken_if ? pred_target_if : // 如果预测跳转，飞过去
-       (if_pc + 4);                     // 默认 +4
+             // 异常触发硬件逻辑
+             .trap_en    (ex_ecall),     // 当 EX 阶段是 ECALL 时触发
+             .trap_pc    (ex_pc),        // 发生异常的 PC 断点
+             .trap_cause (32'd11),       // Cause 11: Environment call from M-mode
+
+             .mepc_out   (mepc_out),
+             .mtvec_out  (mtvec_out),
+             .mie_out    (mie_out),
+
+             .timer_irq  (timer_irq),    // 来自 CLINT 的中断请求
+             .is_mret    (ex_mret),      // MRET 指令，用于恢复中断使能
+             .irq_trap   (irq_trap)
+         );
 
 endmodule

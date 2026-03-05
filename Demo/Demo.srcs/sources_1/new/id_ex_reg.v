@@ -38,6 +38,11 @@ module id_ex_reg(
            // WB 阶段用
            input  wire        id_reg_write,
            input  wire        id_mem_to_reg,
+           // System
+           input  wire        id_is_csr,
+           input  wire        id_ecall,
+           input  wire        id_mret,
+           input  wire [11:0] id_csr_addr,
 
            //data addr
            input  wire [31:0] id_pc,
@@ -72,7 +77,12 @@ module id_ex_reg(
            output reg  [4:0]  ex_rd,
 
            input  pred_taken_id,      // 来自 ID
-           output reg pred_taken_ex   // 传给 EX (用于最终判决)
+           output reg pred_taken_ex,   // 传给 EX (用于最终判决)
+
+           output reg         ex_is_csr,
+           output reg         ex_ecall,
+           output reg         ex_mret,
+           output reg  [11:0] ex_csr_addr
        );
 
 always @(posedge clk or negedge rst_n) begin
@@ -100,6 +110,11 @@ always @(posedge clk or negedge rst_n) begin
 
         pred_taken_ex <= 1'b0;
 
+        ex_is_csr   <= 1'b0;
+        ex_ecall    <= 1'b0;
+        ex_mret     <= 1'b0;
+        ex_csr_addr <= 12'b0;
+
     end
     else if (flush_ex) begin
         // 发生冲刷时，把“写使能”相关信号清零，变成 NOP 操作
@@ -118,6 +133,11 @@ always @(posedge clk or negedge rst_n) begin
         ex_funct3 <= 3'b0;
 
         pred_taken_ex <= 1'b0;
+
+        ex_is_csr   <= 1'b0; // 冲刷时必须清零，防止误触发系统调用
+        ex_ecall    <= 1'b0;
+        ex_mret     <= 1'b0;
+        ex_csr_addr <= 12'b0;
     end
     else begin
         // 正常流水线步进
@@ -144,6 +164,11 @@ always @(posedge clk or negedge rst_n) begin
         ex_funct3 <= id_funct3;
 
         pred_taken_ex <= pred_taken_id;
+
+        ex_is_csr   <= id_is_csr;
+        ex_ecall    <= id_ecall;
+        ex_mret     <= id_mret;
+        ex_csr_addr <= id_csr_addr;
     end
 end
 

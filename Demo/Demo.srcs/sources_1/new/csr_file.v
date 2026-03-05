@@ -34,6 +34,10 @@ module csr_file(
            input  [31:0] trap_pc, // 异常pc
            input  [31:0] trap_cause, // 异常cause
 
+           input  timer_irq, //来自 CLINT 的中断信号
+           input  is_mret,  // 流水线正在执行 MRET
+
+           output irq_trap, //中断冲刷
            output [31:0] mepc_out, // 返回地址
            output [31:0] mtvec_out, // 异常向量地址
            output mie_out //全局中断使能
@@ -44,6 +48,10 @@ reg [31:0] mtvec;
 reg [31:0] mepc;
 reg [31:0] mcause;
 reg [31:0] mscratch;
+
+wire do_trap = trap_en || irq_trap;
+assign mie_out = mstatus[3]; // mstatus 的第 3 位是 MIE (全局中断使能)
+assign irq_trap = timer_irq && mie_out; // 只有当定时器发出请求，且 CPU 允许中断时，才真正触发中断
 
 // 读
 always @(*) begin
@@ -59,7 +67,7 @@ always @(*) begin
         12'h342:
             csr_rdata = mcause;
         default:
-            csr_rdata = 32'b0; // 读不存在的寄存器返回 0
+            csr_rdata = 32'b0;
     endcase
 end
 
@@ -72,16 +80,23 @@ always @(posedge clk or negedge rst_n) begin
         mcause  <= 32'b0;
         mscratch<= 32'b0;
     end
-    else if (trap_en) begin
-        // --- 硬件自动更新 (发生异常时) ---
-        mepc   <= trap_pc;    // 保存当前 PC
-        mcause <= trap_cause; // 记录原因
-        // 注意：标准 RISC-V 还需要更新 mstatus 的 MIE/MPIE 位，这里先简化
-        mstatus[7] <= 0;      // 禁用中断 (MPIE <= MIE; MIE <= 0)
-        mstatus[3] <= mstatus[3]; // 简化: 保存旧的中断状态
+    else if (do_trap) begin
+        // 硬件自动更新 (发生同步异常 异步中断)
+        mepc   <= trap_pc;
+
+        // 如果是定时器中断，写死 Cause 为 0x80000007；如果是 ECALL，用传入的 trap_cause
+        mcause <= irq_trap ? 32'h80000007 : trap_cause;
+
+        mstatus[7] <= mstatus[3]; // 将 MIE (全局使能) 备份到 MPIE (mstatus[7])
+        mstatus[3] <= 1'b0;       // 关闭 MIE
+    end
+    else if (is_mret) begin
+        // 异常返回
+        mstatus[3] <= mstatus[7]; // 恢复现场：把备份的 MPIE 恢复给 MIE
+        mstatus[7] <= 1'b1;       // RISC-V 规范规定 MPIE 置 1
     end
     else if (csr_we) begin
-        // --- 软件指令写 (CSRRW 等) ---
+        // 软件指令写
         case (csr_addr)
             12'h300:
                 mstatus <= csr_wdata;
@@ -94,13 +109,12 @@ always @(posedge clk or negedge rst_n) begin
             12'h342:
                 mcause  <= csr_wdata;
             default:
-                ; // 写不存在的寄存器忽略
+                ;
         endcase
     end
 end
 
 assign mepc_out  = mepc;
 assign mtvec_out = mtvec;
-assign mie_out   = mstatus[3]; // mstatus 的第 3 位是 MIE (全局中断使能)
 
 endmodule

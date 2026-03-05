@@ -34,7 +34,11 @@ module ctrl_unit(
            output reg jump,
 
            output reg reg_write,
-           output reg mem_to_reg
+           output reg mem_to_reg,
+
+           output reg is_csr,
+           output reg ecall,
+           output reg mret
        );
 
 wire [6:0] opcode = instr[6:0];
@@ -50,7 +54,10 @@ always @(*) begin
     branch     = 1'b0;
     jump       = 1'b0;
     reg_write  = 1'b0;
-    mem_to_reg = 1'b0; //default
+    mem_to_reg = 1'b0;
+    is_csr     = 1'b0;
+    ecall      = 1'b0;
+    mret       = 1'b0; //default
 
     case (opcode)
         `OP_REG: begin // R-Type: add, sub, and, or...
@@ -145,6 +152,23 @@ always @(*) begin
             jump      = 1'b1;
             alu_src_b = 1'b1;     // JALR 需要立即数 (rs1 + imm)
             alu_ctrl  = `ALU_ADD; // 计算跳转目标地址
+        end
+
+        `OPCODE_SYSTEM: begin
+            if (funct3 == 3'b000) begin
+                // 1. 异常与中断控制指令
+                if (instr[31:20] == `FUNCT12_ECALL) begin
+                    ecall = 1'b1;
+                end
+                else if (instr[31:20] == `FUNCT12_MRET) begin
+                    mret = 1'b1;
+                end
+            end
+            else begin
+                // 2. CSR 读写指令 (CSRRW, CSRRS, CSRRC 及其立即数版本)
+                is_csr    = 1'b1;
+                reg_write = 1'b1; // CSR 指令需要把读出的旧 CSR 值写回到通用寄存器 rd
+            end
         end
 
         default:

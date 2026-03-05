@@ -14,12 +14,13 @@ verilog xil_defaultlib  --include "../../../../../../../../../../AMDDesignTools/
 "../../../../Demo.srcs/sources_1/new/imem.v" \
 "../../../../Demo.srcs/sources_1/new/imm_gen.v" \
 "../../../../Demo.srcs/sources_1/new/mem_wb_reg.v" \
-"../../../../Demo.srcs/sources_1/new/pc_reg.v" \
 "../../../../Demo.srcs/sources_1/new/reg_file.v" \
 "../../../../Demo.srcs/sources_1/new/wb_stage.v" \
 "../../../../Demo.srcs/sources_1/new/branch_predictor.v" \
 "../../../../Demo.srcs/sources_1/new/csr_file.v" \
 "../../../../Demo.srcs/sources_1/new/mem_ctrl.v" \
+"../../../../Demo.srcs/sources_1/new/if_stage.v" \
+"../../../../Demo.srcs/sources_1/new/clint.v" \
 "../../../../Demo.srcs/sim_1/new/tb_riscv_top.v" \
 
 # compile glbl module

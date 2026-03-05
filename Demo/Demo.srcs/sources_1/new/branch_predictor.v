@@ -38,52 +38,69 @@ module branch_predictor(
 
 parameter INDEX_BITS = 6; // 64 entries
 parameter DEPTH = 1 << INDEX_BITS;
+parameter HIST_BITS = 4;
 
-reg [31:0] btb_tags [DEPTH-1:0]; // PC tag
-reg [31:0] btb_targets [DEPTH-1:0]; // Target address
-reg [1:0] bht_counters [DEPTH-1:0]; // 00: strongly not taken, 01: weakly not taken, 10: weakly taken, 11: strongly taken
-reg valid [DEPTH-1:0]; // Valid bit to indicate if the entry is valid
+// BTB
+reg [31:0] btb_tags [DEPTH-1:0];
+reg [31:0] btb_targets [DEPTH-1:0];
+reg        valid [DEPTH-1:0];
 
-// Index calculation 查表索引
-wire [INDEX_BITS-1:0] if_index = if_pc[INDEX_BITS+1:2]; // Assuming word-aligned addresses
-wire [31:0] if_tag = if_pc;
+// BHT
+reg [HIST_BITS-1:0] bht [DEPTH-1:0];
 
-wire [31:0] stored_tag = btb_tags[if_index];
-wire [31:0] stored_target = btb_targets[if_index];
-wire [1:0] stored_counter = bht_counters[if_index];
-wire stored_valid = valid[if_index];
+// PHT
+parameter PHT_INDEX_BITS = INDEX_BITS + HIST_BITS; // 6 + 4 = 10 bits
+parameter PHT_DEPTH = 1 << PHT_INDEX_BITS;         // 1024 个计数器
+reg [1:0] pht [PHT_DEPTH-1:0];
 
-wire hit = stored_valid && (stored_tag == if_tag);
+// IF 阶段预测逻辑
+wire [INDEX_BITS-1:0] if_idx = if_pc[INDEX_BITS+1:2];
+wire [31:0]           if_tag = if_pc;
 
-assign pred_taken = hit && (stored_counter[1] == 1); // Predict taken if counter is 10 or 11
-assign pred_target = hit ? stored_target : 32'b0; //交给mux
+wire [HIST_BITS-1:0]  if_hist    = bht[if_idx];            // 查BHT拿到历史
+wire [PHT_INDEX_BITS-1:0] if_pht_idx = {if_idx, if_hist};  // 拼接哈希
 
-// EX 阶段更新
-wire [INDEX_BITS-1:0] ex_index = ex_pc[INDEX_BITS+1 : 2];
+wire stored_valid = valid[if_idx];
+wire hit = stored_valid && (btb_tags[if_idx] == if_tag);
+wire [1:0] counter_if = pht[if_pht_idx];                   // 查PHT拿到计数器
+
+assign pred_taken  = hit && (counter_if[1] == 1'b1);       // 预测状态 (10 或 11 预测跳)
+assign pred_target = hit ? btb_targets[if_idx] : 32'b0;
+
+// EX 阶段更新逻辑
+wire [INDEX_BITS-1:0] ex_idx = ex_pc[INDEX_BITS+1:2];
+wire [HIST_BITS-1:0]  ex_hist = bht[ex_idx];               // 拿到之前预测时用的旧历史
+wire [PHT_INDEX_BITS-1:0] ex_pht_idx = {ex_idx, ex_hist};
+
 integer i;
-
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         for (i = 0; i < DEPTH; i = i + 1) begin
             valid[i] <= 0;
-            bht_counters[i] <= 2'b01; // 默认弱不跳转
+            bht[i]   <= 0;
+        end
+        for (i = 0; i < PHT_DEPTH; i = i + 1) begin
+            pht[i] <= 2'b01; // PHT默认弱不跳转
         end
     end
     else if (ex_is_branch) begin
-        // 1. 更新 Tag 和 Target (无论跳没跳，都更新，建立索引)
-        valid[ex_index] <= 1'b1;
-        btb_tags[ex_index] <= ex_pc;
-        btb_targets[ex_index] <= ex_actual_target;
+        // 更新 BTB 目标
+        valid[ex_idx]       <= 1'b1;
+        btb_tags[ex_idx]    <= ex_pc;
+        btb_targets[ex_idx] <= ex_actual_target;
 
-        // 2. 更新饱和计数器
+        // 更新 PHT (2位饱和计数器)
         if (ex_actual_taken) begin
-            if (bht_counters[ex_index] != 2'b11)
-                bht_counters[ex_index] <= bht_counters[ex_index] + 1;
+            if (pht[ex_pht_idx] != 2'b11)
+                pht[ex_pht_idx] <= pht[ex_pht_idx] + 1;
         end
         else begin
-            if (bht_counters[ex_index] != 2'b00)
-                bht_counters[ex_index] <= bht_counters[ex_index] - 1;
+            if (pht[ex_pht_idx] != 2'b00)
+                pht[ex_pht_idx] <= pht[ex_pht_idx] - 1;
         end
+
+        // 更新 BHT (左移，并把实际跳转结果挤入最低位)
+        bht[ex_idx] <= {bht[ex_idx][HIST_BITS-2:0], ex_actual_taken};
     end
 end
 

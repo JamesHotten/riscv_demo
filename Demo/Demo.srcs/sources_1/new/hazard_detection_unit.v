@@ -28,6 +28,11 @@ module hazard_detection_unit(
 
            input  mispredict,
 
+           input  ex_ecall,
+           input  ex_mret,
+
+           input  irq_trap,
+
            output reg stall_if,
            output reg stall_id,
            output reg flush_id,
@@ -40,7 +45,8 @@ always @(*) begin
     flush_ex = 0;
     flush_id = 0;
 
-    if(mispredict) begin
+    // 异常、返回或预测失败，冲刷 IF 和 ID 阶段
+    if (mispredict || ex_ecall || ex_mret || irq_trap) begin
         flush_id = 1;
         flush_ex = 1;
     end
