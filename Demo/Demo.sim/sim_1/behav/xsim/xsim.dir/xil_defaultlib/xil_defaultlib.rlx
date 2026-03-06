@@ -2,7 +2,7 @@
 2020.2
 Nov 14 2025
 19:37:27
-C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.sim/sim_1/behav/xsim/glbl.v,1756381829,verilog,,,,glbl,,,,,,,,
+C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.sim/sim_1/behav/xsim/glbl.v,1772712940,verilog,,,,glbl,,,,,,,,
 C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sim_1/new/tb_riscv_top.v,1771588236,verilog,,,,tb_riscv_top,,,../../../../../../../../../../AMDDesignTools/2025.2/Vivado/data/rsb/busdef,,,,,
 C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/alu.v,1771499696,verilog,,C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/ctrl_unit.v,C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/riscv_defines.v,alu,,,../../../../../../../../../../AMDDesignTools/2025.2/Vivado/data/rsb/busdef,,,,,
 ,,,,C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/csr_file.v,,branch_predictor,,,,,,,,
@@ -22,6 +22,6 @@ C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/imm_gen.
 ,,,,C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/if_stage.v,,mem_ctrl,,,,,,,,
 C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/mem_wb_reg.v,1771557028,verilog,,C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/reg_file.v,,mem_wb_reg,,,../../../../../../../../../../AMDDesignTools/2025.2/Vivado/data/rsb/busdef,,,,,
 C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/reg_file.v,1771500078,verilog,,C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/wb_stage.v,,reg_file,,,../../../../../../../../../../AMDDesignTools/2025.2/Vivado/data/rsb/busdef,,,,,
-C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/riscv_defines.v,1772462990,verilog,,C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/alu.v,,,,,../../../../../../../../../../AMDDesignTools/2025.2/Vivado/data/rsb/busdef,,,,,
-C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/riscv_top.v,1772709506,verilog,,C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/riscv_defines.v,C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/riscv_defines.v,riscv_top,,,../../../../../../../../../../AMDDesignTools/2025.2/Vivado/data/rsb/busdef,,,,,
+C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/riscv_defines.v,1772712940,verilog,,C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/alu.v,,,,,../../../../../../../../../../AMDDesignTools/2025.2/Vivado/data/rsb/busdef,,,,,
+C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/riscv_top.v,1772765518,verilog,,C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/riscv_defines.v,C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/riscv_defines.v,riscv_top,,,../../../../../../../../../../AMDDesignTools/2025.2/Vivado/data/rsb/busdef,,,,,
 C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/wb_stage.v,1771557191,verilog,,C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sources_1/new/branch_predictor.v,,wb_stage,,,../../../../../../../../../../AMDDesignTools/2025.2/Vivado/data/rsb/busdef,,,,,

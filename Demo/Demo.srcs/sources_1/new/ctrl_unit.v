@@ -156,7 +156,7 @@ always @(*) begin
 
         `OPCODE_SYSTEM: begin
             if (funct3 == 3'b000) begin
-                // 1. 异常与中断控制指令
+                // 异常与中断控制指令
                 if (instr[31:20] == `FUNCT12_ECALL) begin
                     ecall = 1'b1;
                 end
@@ -165,7 +165,7 @@ always @(*) begin
                 end
             end
             else begin
-                // 2. CSR 读写指令 (CSRRW, CSRRS, CSRRC 及其立即数版本)
+                // CSR 读写指令 (CSRRW, CSRRS, CSRRC 及其立即数版本)
                 is_csr    = 1'b1;
                 reg_write = 1'b1; // CSR 指令需要把读出的旧 CSR 值写回到通用寄存器 rd
             end
