@@ -46,6 +46,7 @@
 `define ALU_B    4'b1111 // 直接输出操作数B
 
 `define OPCODE_SYSTEM  7'b1110011
+`define FENCE  7'b0001111 // MISC-MEM: fence指令
 
         // Funct3 (决定是哪种 CSR 操作)
 `define FUNCT3_CSRRW   3'b001  // Read & Write (交换)
@@ -55,5 +56,6 @@
         // 特权指令 Funct12 (System Instructions)
 `define FUNCT12_ECALL  12'h000 // Environment Call
 `define FUNCT12_MRET   12'h302 // Machine Return
+`define FUNCT12_EBREAK  12'h001 // Breakpoint
 
 `endif

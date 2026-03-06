@@ -29,6 +29,7 @@ module hazard_detection_unit(
            input  mispredict,
 
            input  ex_ecall,
+           input  ex_ebreak,
            input  ex_mret,
 
            input  irq_trap,
@@ -49,7 +50,7 @@ always @(*) begin
 
     // 异步中断或系统调用(ECALL)：
     // 正在 EX 阶段的指令被中止，保存其 PC，因此要杀掉它不让它进 MEM 阶段生效
-    if (irq_trap || ex_ecall) begin
+    if (irq_trap || ex_ecall || ex_ebreak) begin
         flush_id = 1;
         flush_ex = 1;
         flush_mem = 1;

@@ -38,6 +38,7 @@ module if_stage(
            input  [31:0] ex_pc,            // EX 阶段的PC
 
            input         ex_ecall,
+           input         ex_ebreak,
            input         ex_mret,
            input  [31:0] mtvec_out,
            input  [31:0] mepc_out,
@@ -61,7 +62,7 @@ wire [31:0] correct_pc = ex_branch_taken ? ex_target_addr : (ex_pc + 32'd4);
 // 取指 PC 多路选择器
 wire [31:0] pc_next;
 
-assign pc_next = (ex_ecall || irq_trap) ? mtvec_out :      // 发生异常或外部中断，强制跳往 mtvec
+assign pc_next = (ex_ecall || irq_trap || ex_ebreak) ? mtvec_out :      // 发生异常或外部中断，强制跳往 mtvec
        ex_mret                ? mepc_out :       // 异常返回，强制跳往 mepc
        mispredict             ? correct_pc :     // 分支预测失败修正
        pred_taken_if          ? pred_target_if : // 预测跳转

@@ -84,6 +84,9 @@ wire        ex_mem_to_reg;
 wire [2:0] id_funct3 = id_instr[14:12];
 wire [2:0] ex_funct3;
 
+wire id_ebreak;
+wire ex_ebreak;
+
 //  EX Stage Signals
 wire [31:0] ex_alu_result;
 wire [31:0] ex_rs2_forwarded;
@@ -177,6 +180,7 @@ hazard_detection_unit u_hazard_detect (
                           .flush_mem(flush_mem),
 
                           .ex_ecall    (ex_ecall),
+                          .ex_ebreak(ex_ebreak),
                           .ex_mret     (ex_mret),
                           .irq_trap    (irq_trap)
                       );
@@ -212,6 +216,7 @@ if_stage u_if_stage (
              .mispredict      (mispredict),
 
              .ex_ecall        (ex_ecall),
+             .ex_ebreak(ex_ebreak),
              .ex_mret         (ex_mret),
              .mtvec_out       (mtvec_out),
              .mepc_out        (mepc_out),
@@ -273,6 +278,7 @@ ctrl_unit u_ctrl_unit (
               .mem_to_reg(id_mem_to_reg),
               .is_csr    (id_is_csr),
               .ecall     (id_ecall),
+              .ebreak   (id_ebreak),
               .mret      (id_mret)
           );
 
@@ -334,6 +340,8 @@ id_ex_reg u_id_ex_reg (
               .ex_ecall    (ex_ecall),
               .ex_mret     (ex_mret),
               .ex_csr_addr (ex_csr_addr),
+              .id_ebreak(id_ebreak),
+              .ex_ebreak(ex_ebreak),
 
               .id_valid      (id_valid),
               .ex_valid      (ex_valid)
@@ -463,6 +471,8 @@ branch_predictor u_bp (
                      .ex_actual_target(ex_target_addr)
                  );
 
+wire trap_en_signal = ex_ecall || ex_ebreak;
+wire [31:0] trap_cause_signal = ex_ebreak ? 32'd3 : 32'd11;
 csr_file u_csr (
              .clk        (clk),
              .rst_n      (rst_n),
@@ -472,9 +482,9 @@ csr_file u_csr (
              .csr_wdata  (csr_wdata),
              .csr_rdata  (csr_rdata),
 
-             .trap_en    (ex_ecall),
              .trap_pc    (ex_pc),
-             .trap_cause (32'd11),
+             .trap_en   (trap_en_signal),
+             .trap_cause(trap_cause_signal),
 
              .mepc_out   (mepc_out),
              .mtvec_out  (mtvec_out),

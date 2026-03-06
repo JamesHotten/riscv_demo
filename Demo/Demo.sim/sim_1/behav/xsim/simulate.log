@@ -1,22 +1,11 @@
 Time resolution is 1 ps
 Simulation Start!
-Time                75000: Write Reg x1 = 12345000
-Time                85000: Write Reg x1 = 12345678
-Time                95000: Write Reg x2 = 00000064
-Time               115000: Write Reg x3 = 00000078
-Time               135000: Write Reg x4 = 123456f0
-Time               145000: Write Reg x5 = 00005678
-Time               155000: Write Reg x6 = 00001234
-Time               165000: Write Reg x7 = ffffffff
-Time               175000: Write Reg x8 = fffffff0
-Time               185000: Write Reg x9 = 0fffffff
-Time               195000: Write Reg x10 = ffffffff
-Time               205000: Write Reg x11 = 00000001
-Time               215000: Write Reg x12 = 00000000
-Time               225000: Write Reg x13 = 00000080
-Time               245000: Write Reg x17 = 0000000b
-Time               285000: Write Reg x15 = 00000044
-Time               295000: Write Reg x15 = 00000048
-Time               295000: [MRET] Return from Interrupt! Jumping back to: 00000048
-Time               335000: [Predictor] Mispredict detected! Target PC should be 0000004c
-Time               345000: Write Reg x14 = 00000063
+Time                75000: Write Reg x1 = 00000040
+Time                95000: Write Reg x2 = 0000000a
+Time               115000: Write Reg x2 = 00000014
+Time               155000: Write Reg x4 = 00000003
+Time               165000: Write Reg x5 = 00000014
+Time               175000: Write Reg x5 = 00000018
+Time               175000: [MRET] Return from Interrupt! Jumping back to: 00000018
+Time               215000: [Predictor] Mispredict detected! Target PC should be 0000001c
+Time               225000: Write Reg x3 = 00000063

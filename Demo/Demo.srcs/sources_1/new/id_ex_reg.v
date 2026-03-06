@@ -41,6 +41,7 @@ module id_ex_reg(
            // System
            input  wire        id_is_csr,
            input  wire        id_ecall,
+           input  wire        id_ebreak,
            input  wire        id_mret,
            input  wire [11:0] id_csr_addr,
 
@@ -86,6 +87,7 @@ module id_ex_reg(
 
            output reg         ex_is_csr,
            output reg         ex_ecall,
+           output reg         ex_ebreak,
            output reg         ex_mret,
            output reg  [11:0] ex_csr_addr
        );
@@ -120,6 +122,7 @@ always @(posedge clk or negedge rst_n) begin
         ex_ecall    <= 1'b0;
         ex_mret     <= 1'b0;
         ex_csr_addr <= 12'b0;
+        ex_ebreak <= 1'b0;
 
         ex_valid <= 1'b0;
     end
@@ -147,6 +150,7 @@ always @(posedge clk or negedge rst_n) begin
         ex_mret     <= 1'b0;
         ex_csr_addr <= 12'b0;
         ex_valid     <= 1'b0;
+        ex_ebreak <= 1'b0;
 
     end
     else begin
@@ -181,6 +185,7 @@ always @(posedge clk or negedge rst_n) begin
         ex_mret     <= id_mret;
         ex_csr_addr <= id_csr_addr;
         ex_valid <= id_valid;
+        ex_ebreak <= id_ebreak;
     end
 end
 

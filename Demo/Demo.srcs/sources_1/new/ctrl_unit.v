@@ -38,6 +38,7 @@ module ctrl_unit(
 
            output reg is_csr,
            output reg ecall,
+           output reg ebreak,
            output reg mret
        );
 
@@ -57,6 +58,7 @@ always @(*) begin
     mem_to_reg = 1'b0;
     is_csr     = 1'b0;
     ecall      = 1'b0;
+    ebreak = 1'b0;
     mret       = 1'b0; //default
 
     case (opcode)
@@ -154,11 +156,19 @@ always @(*) begin
             alu_ctrl  = `ALU_ADD; // 计算跳转目标地址
         end
 
+        `FENCE: begin
+            // FENCE 对于单核无缓存架构就是 NOP
+            // 不需要做任何事情，所有控制信号保持顶部的默认值 0 即可
+        end
+
         `OPCODE_SYSTEM: begin
             if (funct3 == 3'b000) begin
                 // 异常与中断控制指令
                 if (instr[31:20] == `FUNCT12_ECALL) begin
                     ecall = 1'b1;
+                end
+                else if (instr[31:20] == `FUNCT12_EBREAK) begin
+                    ebreak = 1'b1;
                 end
                 else if (instr[31:20] == `FUNCT12_MRET) begin
                     mret = 1'b1;
