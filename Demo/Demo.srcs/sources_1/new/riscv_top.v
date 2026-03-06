@@ -23,10 +23,7 @@
 
 module riscv_top(
            input  clk,
-           input  rst_n,
-
-           output [31:0] current_pc,
-           output [31:0] wb_data
+           input  rst_n
        );
 
 //  Hazard & Control Signals
@@ -36,6 +33,7 @@ wire        flush_id;
 wire        flush_ex;
 wire [1:0]  forward_a;
 wire [1:0]  forward_b;
+wire flush_mem;
 
 //  IF Stage Signals
 wire [31:0] if_pc;
@@ -134,6 +132,8 @@ wire        pred_taken_id;
 wire        pred_taken_ex;
 wire        pred_taken_if;
 wire [31:0] pred_target_if;
+wire [31:0] pred_target_id;
+wire [31:0] pred_target_ex;
 wire        mispredict;
 
 //  WB Stage Signals
@@ -158,6 +158,9 @@ wire [31:0] mtvec_out;
 wire        mie_out;
 wire        irq_trap;
 
+wire id_valid;
+wire ex_valid;
+
 // ==================== 模块例化区 ====================
 
 hazard_detection_unit u_hazard_detect (
@@ -171,6 +174,7 @@ hazard_detection_unit u_hazard_detect (
                           .stall_id    (stall_id),
                           .flush_id    (flush_id),
                           .flush_ex    (flush_ex),
+                          .flush_mem(flush_mem),
 
                           .ex_ecall    (ex_ecall),
                           .ex_mret     (ex_mret),
@@ -201,6 +205,7 @@ if_stage u_if_stage (
              .ex_branch_taken (ex_branch_taken),
              .ex_target_addr  (ex_target_addr),
              .pred_taken_ex   (pred_taken_ex),
+             .pred_target_ex(pred_target_ex),
              .ex_pc           (ex_pc),
 
              .if_pc           (if_pc),
@@ -229,9 +234,12 @@ if_id_reg u_if_id_reg (
 
               .pred_taken_if(pred_taken_if),
               .pred_taken_id(pred_taken_id),
+              .pred_target_if(pred_target_if),
+              .pred_target_id(pred_target_id),
 
               .id_pc        (id_pc),
-              .id_instr     (id_instr)
+              .id_instr     (id_instr),
+              .id_valid      (id_valid)
           );
 
 // Stage 2: ID (译码)
@@ -294,6 +302,8 @@ id_ex_reg u_id_ex_reg (
 
               .pred_taken_id(pred_taken_id),
               .pred_taken_ex(pred_taken_ex),
+              .pred_target_id(pred_target_id),
+              .pred_target_ex(pred_target_ex),
 
               .id_is_csr   (id_is_csr),
               .id_ecall    (id_ecall),
@@ -323,7 +333,10 @@ id_ex_reg u_id_ex_reg (
               .ex_is_csr   (ex_is_csr),
               .ex_ecall    (ex_ecall),
               .ex_mret     (ex_mret),
-              .ex_csr_addr (ex_csr_addr)
+              .ex_csr_addr (ex_csr_addr),
+
+              .id_valid      (id_valid),
+              .ex_valid      (ex_valid)
           );
 
 // Stage 3: EX (执行)
@@ -367,6 +380,7 @@ ex_mem_reg u_ex_mem_reg (
                .ex_rs2_data   (ex_rs2_forwarded),
                .ex_rd         (ex_rd),
                .ex_funct3     (ex_funct3),
+               .flush_mem(flush_mem),
 
                .mem_mem_write (mem_mem_write),
                .mem_mem_read  (mem_mem_read),
@@ -443,7 +457,8 @@ branch_predictor u_bp (
                      .pred_target     (pred_target_if),
 
                      .ex_pc           (ex_pc),
-                     .ex_is_branch    (ex_branch || ex_jump),
+                     .ex_is_cond_branch(ex_branch),
+                     .ex_is_jump       (ex_jump),
                      .ex_actual_taken (ex_branch_taken),
                      .ex_actual_target(ex_target_addr)
                  );
@@ -467,7 +482,8 @@ csr_file u_csr (
 
              .timer_irq  (timer_irq),
              .is_mret    (ex_mret),
-             .irq_trap   (irq_trap)
+             .irq_trap   (irq_trap),
+             .ex_valid      (ex_valid)
          );
 
 endmodule

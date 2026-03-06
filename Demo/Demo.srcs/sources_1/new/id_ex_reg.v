@@ -78,6 +78,11 @@ module id_ex_reg(
 
            input  pred_taken_id,      // 来自 ID
            output reg pred_taken_ex,   // 传给 EX (用于最终判决)
+           input  [31:0] pred_target_id,
+           output reg [31:0] pred_target_ex,
+
+           input  id_valid,
+           output reg ex_valid,
 
            output reg         ex_is_csr,
            output reg         ex_ecall,
@@ -109,12 +114,14 @@ always @(posedge clk or negedge rst_n) begin
         ex_funct3 <= 3'b0;
 
         pred_taken_ex <= 1'b0;
+        pred_target_ex <= 32'b0;
 
         ex_is_csr   <= 1'b0;
         ex_ecall    <= 1'b0;
         ex_mret     <= 1'b0;
         ex_csr_addr <= 12'b0;
 
+        ex_valid <= 1'b0;
     end
     else if (flush_ex) begin
         // 发生冲刷时，把“写使能”相关信号清零，变成 NOP 操作
@@ -133,11 +140,14 @@ always @(posedge clk or negedge rst_n) begin
         ex_funct3 <= 3'b0;
 
         pred_taken_ex <= 1'b0;
+        pred_target_ex <= 32'b0;
 
         ex_is_csr   <= 1'b0; // 冲刷时必须清零，防止误触发系统调用
         ex_ecall    <= 1'b0;
         ex_mret     <= 1'b0;
         ex_csr_addr <= 12'b0;
+        ex_valid     <= 1'b0;
+
     end
     else begin
         // 正常流水线步进
@@ -164,11 +174,13 @@ always @(posedge clk or negedge rst_n) begin
         ex_funct3 <= id_funct3;
 
         pred_taken_ex <= pred_taken_id;
+        pred_target_ex <= pred_target_id;
 
         ex_is_csr   <= id_is_csr;
         ex_ecall    <= id_ecall;
         ex_mret     <= id_mret;
         ex_csr_addr <= id_csr_addr;
+        ex_valid <= id_valid;
     end
 end
 

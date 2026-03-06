@@ -1,57 +1,22 @@
 Time resolution is 1 ps
 Simulation Start!
-Time                75000: Write Reg x1 = 00000054
-Time                95000: Write Reg x2 = 00000020
-Time               105000: Write Reg x3 = 02004000
-Time               115000: Write Reg x4 = 00000019
-Time               145000: Write Reg x4 = 00000008
-Time               165000: Write Reg x5 = 00000000
-Time               175000: Write Reg x6 = 00000001
-Time               185000: Write Reg x7 = 00000001
-Time               195000: Write Reg x8 = 00000005
-Time               205000: Write Reg x9 = 00000002
-Time               215000: Write Reg x6 = 00000001
-Time               225000: Write Reg x7 = 00000002
-Time               225000: [Predictor] Mispredict detected! Target PC should be 00000034
-Time               235000: Write Reg x5 = 00000001
-Time               275000: Write Reg x9 = 00000003
-Time               285000: Write Reg x6 = 00000002
-Time               295000: Write Reg x7 = 00000003
-Time               305000: Write Reg x5 = 00000002
-Time               365000: Write Reg x10 = 80000007
-Time               375000: Write Reg x3 = 02004000
-Time               385000: Write Reg x4 = ffffffff
-Time               405000: Write Reg x6 = 00000002
-Time               415000: Write Reg x7 = 00000003
-Time               425000: Write Reg x9 = 00000003
-Time               455000: [Predictor] Mispredict detected! Target PC should be 00000034
-Time               465000: Write Reg x5 = 00000003
-Time               505000: Write Reg x9 = 00000005
-Time               515000: Write Reg x6 = 00000003
-Time               525000: Write Reg x7 = 00000005
-Time               525000: [Predictor] Mispredict detected! Target PC should be 00000034
-Time               535000: Write Reg x5 = 00000004
-Time               575000: Write Reg x9 = 00000008
-Time               585000: Write Reg x6 = 00000005
-Time               595000: Write Reg x7 = 00000008
-Time               605000: Write Reg x5 = 00000005
-Time               605000: [Predictor] Mispredict detected! Target PC should be 00000048
-Time               635000: [Predictor] Mispredict detected! Target PC should be 00000048
-Time               665000: [Predictor] Mispredict detected! Target PC should be 00000048
-Time               695000: [Predictor] Mispredict detected! Target PC should be 00000048
-Time               725000: [Predictor] Mispredict detected! Target PC should be 00000048
-Simulation Start!
-Time                75000: Write Reg x1 = 0000000a
-Time                85000: Write Reg x2 = 00000014
-Time                95000: Write Reg x3 = 0000001e
-Time               105000: Write Reg x4 = 00000014
-Time               125000: Write Reg x5 = 0000001e
-Time               125000: [Predictor] Mispredict detected! Target PC should be 00000020
-Time               175000: Write Reg x7 = 00000064
-Time               175000: [Predictor] Mispredict detected! Target PC should be 00000028
-Time               205000: [Predictor] Mispredict detected! Target PC should be 00000028
-Time               235000: [Predictor] Mispredict detected! Target PC should be 00000028
-Time               265000: [Predictor] Mispredict detected! Target PC should be 00000028
-Time               295000: [Predictor] Mispredict detected! Target PC should be 00000028
-Simulation Timeout.
-$finish called at time : 2030 ns : File "C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sim_1/new/tb_riscv_top.v" Line 33
+Time                75000: Write Reg x1 = 12345000
+Time                85000: Write Reg x1 = 12345678
+Time                95000: Write Reg x2 = 00000064
+Time               115000: Write Reg x3 = 00000078
+Time               135000: Write Reg x4 = 123456f0
+Time               145000: Write Reg x5 = 00005678
+Time               155000: Write Reg x6 = 00001234
+Time               165000: Write Reg x7 = ffffffff
+Time               175000: Write Reg x8 = fffffff0
+Time               185000: Write Reg x9 = 0fffffff
+Time               195000: Write Reg x10 = ffffffff
+Time               205000: Write Reg x11 = 00000001
+Time               215000: Write Reg x12 = 00000000
+Time               225000: Write Reg x13 = 00000080
+Time               245000: Write Reg x17 = 0000000b
+Time               285000: Write Reg x15 = 00000044
+Time               295000: Write Reg x15 = 00000048
+Time               295000: [MRET] Return from Interrupt! Jumping back to: 00000048
+Time               335000: [Predictor] Mispredict detected! Target PC should be 0000004c
+Time               345000: Write Reg x14 = 00000063

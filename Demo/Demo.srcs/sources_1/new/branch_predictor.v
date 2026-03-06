@@ -31,11 +31,13 @@ module branch_predictor(
 
            // ex_stage 更新
            input  [31:0] ex_pc,
-           input  ex_is_branch,
+           //    input  ex_is_branch,
+           input  ex_is_cond_branch, // 条件分支 (BEQ, BNE等)
+           input  ex_is_jump,       // 无条件跳转 (JAL, JALR等)
            input  ex_actual_taken,
            input  [31:0] ex_actual_target
        );
-
+// 把条件分支和无条件跳转在预测器中彻底剥离开来：BTB（目标地址）两者都记录，但 BHT 和 PHT 只允许条件分支去更新。
 parameter INDEX_BITS = 6; // 64 entries
 parameter DEPTH = 1 << INDEX_BITS;
 parameter HIST_BITS = 4;
@@ -44,6 +46,7 @@ parameter HIST_BITS = 4;
 reg [31:0] btb_tags [DEPTH-1:0];
 reg [31:0] btb_targets [DEPTH-1:0];
 reg        valid [DEPTH-1:0];
+reg        btb_is_jump [DEPTH-1:0]; // 记录是否无条件跳转
 
 // BHT
 reg [HIST_BITS-1:0] bht [DEPTH-1:0];
@@ -64,7 +67,8 @@ wire stored_valid = valid[if_idx];
 wire hit = stored_valid && (btb_tags[if_idx] == if_tag);
 wire [1:0] counter_if = pht[if_pht_idx];                   // 查PHT拿到计数器
 
-assign pred_taken  = hit && (counter_if[1] == 1'b1);       // 预测状态 (10 或 11 预测跳)
+wire stored_is_jump = btb_is_jump[if_idx];
+assign pred_taken  = hit && (stored_is_jump || counter_if[1] == 1'b1);      // 预测状态 (10 或 11 预测跳)
 assign pred_target = hit ? btb_targets[if_idx] : 32'b0;
 
 // EX 阶段更新逻辑
@@ -78,29 +82,33 @@ always @(posedge clk or negedge rst_n) begin
         for (i = 0; i < DEPTH; i = i + 1) begin
             valid[i] <= 0;
             bht[i]   <= 0;
+            btb_is_jump[i] <= 1'b0;
         end
         for (i = 0; i < PHT_DEPTH; i = i + 1) begin
             pht[i] <= 2'b01; // PHT默认弱不跳转
         end
     end
-    else if (ex_is_branch) begin
+    else if (ex_is_cond_branch || ex_is_jump) begin
         // 更新 BTB 目标
         valid[ex_idx]       <= 1'b1;
         btb_tags[ex_idx]    <= ex_pc;
         btb_targets[ex_idx] <= ex_actual_target;
+        btb_is_jump[ex_idx] <= ex_is_jump;
 
-        // 更新 PHT (2位饱和计数器)
-        if (ex_actual_taken) begin
-            if (pht[ex_pht_idx] != 2'b11)
-                pht[ex_pht_idx] <= pht[ex_pht_idx] + 1;
-        end
-        else begin
-            if (pht[ex_pht_idx] != 2'b00)
-                pht[ex_pht_idx] <= pht[ex_pht_idx] - 1;
-        end
+        if (ex_is_cond_branch) begin
+            // 更新 PHT (2位饱和计数器)
+            if (ex_actual_taken) begin
+                if (pht[ex_pht_idx] != 2'b11)
+                    pht[ex_pht_idx] <= pht[ex_pht_idx] + 1;
+            end
+            else begin
+                if (pht[ex_pht_idx] != 2'b00)
+                    pht[ex_pht_idx] <= pht[ex_pht_idx] - 1;
+            end
 
-        // 更新 BHT (左移，并把实际跳转结果挤入最低位)
-        bht[ex_idx] <= {bht[ex_idx][HIST_BITS-2:0], ex_actual_taken};
+            // 更新 BHT (左移，并把实际跳转结果挤入最低位)
+            bht[ex_idx] <= {bht[ex_idx][HIST_BITS-2:0], ex_actual_taken};
+        end
     end
 end
 

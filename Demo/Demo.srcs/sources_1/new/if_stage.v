@@ -34,6 +34,7 @@ module if_stage(
            input         ex_branch_taken,  // EX 阶段算出的实际是否该跳
            input  [31:0] ex_target_addr,   // EX 阶段算出的实际目标
            input         pred_taken_ex,    // 预测时给出的结果
+           input  [31:0] pred_target_ex,
            input  [31:0] ex_pc,            // EX 阶段的PC
 
            input         ex_ecall,
@@ -47,7 +48,12 @@ module if_stage(
        );
 
 // 预测失败
-assign mispredict = ex_is_branch && (pred_taken_ex != ex_branch_taken);
+// 方向预测错了 (该跳没跳，或不该跳跳了)
+wire direction_mismatch = (pred_taken_ex != ex_branch_taken);
+// 方向预测对了，都是跳转，但目标地址算错了 (专门针对 JALR/BTB 污染)
+wire target_mismatch = pred_taken_ex && ex_branch_taken && (pred_target_ex != ex_target_addr);
+// 只要方向错或者地址错，且当前是分支/跳转指令，就触发冲刷
+assign mispredict = ex_is_branch && (direction_mismatch || target_mismatch);
 
 // 正确的 PC 地址
 wire [31:0] correct_pc = ex_branch_taken ? ex_target_addr : (ex_pc + 32'd4);

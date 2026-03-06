@@ -25,6 +25,7 @@ module ex_mem_reg(
            input rst_n,
 
            // MEM 阶段用
+           input  flush_mem,
            input  ex_mem_write,
            input  ex_mem_read,
            // WB 阶段用
@@ -62,6 +63,17 @@ always @(posedge clk or negedge rst_n) begin
         mem_wdata      <= 32'd0;
         mem_rd         <= 5'd0;
         mem_funct3 <= 3'b0;
+    end
+    else if (flush_mem) begin
+        // 如果被中断斩杀，强行插入气泡，清空写控制信号
+        mem_mem_write  <= 1'b0;
+        mem_mem_read   <= 1'b0;
+        mem_reg_write  <= 1'b0;
+        mem_mem_to_reg <= 1'b0;
+        mem_alu_result <= 32'd0;
+        mem_wdata      <= 32'd0;
+        mem_rd         <= 5'd0;
+        mem_funct3     <= 3'b0;
     end
     else begin
         // 正常流水线步进：把 EX 阶段的成果打包送到 MEM 阶段

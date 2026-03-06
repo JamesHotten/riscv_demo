@@ -62,7 +62,6 @@ reg  [31:0] forwarded_b;
 wire [31:0] alu_in_a;
 wire [31:0] alu_in_b;
 wire [31:0] alu_calc_out;
-wire        alu_zero;
 wire [31:0] pc_plus_4;
 
 // scra, scrb
@@ -104,8 +103,7 @@ alu u_alu(
         .a(alu_in_a),
         .b(alu_in_b),
         .alu_ctrl(ex_alu_ctrl),
-        .result(alu_calc_out),
-        .zero(alu_zero)
+        .result(alu_calc_out)
     );
 
 // branch

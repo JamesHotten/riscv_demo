@@ -36,6 +36,7 @@ module csr_file(
 
            input  timer_irq, //来自 CLINT 的中断信号
            input  is_mret,  // 流水线正在执行 MRET
+           input  ex_valid,
 
            output irq_trap, //中断冲刷
            output [31:0] mepc_out, // 返回地址
@@ -51,7 +52,8 @@ reg [31:0] mscratch;
 
 wire do_trap = trap_en || irq_trap;
 assign mie_out = mstatus[3]; // mstatus 的第 3 位是 MIE (全局中断使能)
-assign irq_trap = timer_irq && mie_out; // 只有当定时器发出请求，且 CPU 允许中断时，才真正触发中断
+// 只有当定时器请求 + CPU允许中断 + EX阶段有一条真实的有效指令时，才触发中断打断它
+assign irq_trap = timer_irq && mie_out && ex_valid;
 
 // 读
 always @(*) begin
