@@ -51,13 +51,17 @@ end
 always @(negedge clk) begin
     if (rst_n) begin
         // 监控寄存器写回 (WB 阶段)
-        if (u_dut.u_wb_stage.wb_mem_to_reg ? u_dut.u_mem_wb_reg.wb_reg_write : u_dut.u_ex_mem_reg.mem_reg_write) begin
-            if (u_dut.wb_rd != 0) begin
-                $fdisplay(trace_file, "%9t | REG_WRITE   | x%0d <= 0x%08h",
-                          $time, u_dut.wb_rd, u_dut.wb_final_data);
-                // 同时在控制台打印，方便实时观看
-                $display("Time %9t: Write Reg x%0d = %08h", $time, u_dut.wb_rd, u_dut.wb_final_data);
-            end
+        if (u_dut.wb_reg_write && u_dut.wb_rd != 0 && !u_dut.wb_fp_write) begin
+            $fdisplay(trace_file, "%9t | REG_WRITE   | x%0d <= 0x%08h",
+                      $time, u_dut.wb_rd, u_dut.wb_final_data);
+            $display("Time %9t: Write Reg x%0d = %08h", $time, u_dut.wb_rd, u_dut.wb_final_data);
+        end
+
+        // 监控浮点寄存器写回
+        if (u_dut.wb_fp_write) begin
+            $fdisplay(trace_file, "%9t | FPR_WRITE   | f%0d <= 0x%08h",
+                      $time, u_dut.wb_rd, u_dut.wb_final_data);
+            $display("Time %9t: Write FPR f%0d = %08h", $time, u_dut.wb_rd, u_dut.wb_final_data);
         end
 
         // 监控内存写入 (MEM 阶段)

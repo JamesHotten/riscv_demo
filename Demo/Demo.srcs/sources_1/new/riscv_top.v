@@ -164,6 +164,24 @@ wire        irq_trap;
 wire id_valid;
 wire ex_valid;
 
+// FPU
+
+wire        id_fp_write;
+wire        id_is_fp_load;
+wire        id_is_fp_store;
+
+wire        ex_fp_write;
+wire        ex_is_fp_load;
+wire        ex_is_fp_store;
+
+wire [31:0] id_fs1_data;
+wire [31:0] id_fs2_data;
+wire [31:0] id_fs3_data;
+wire [31:0] ex_fs2_data;
+
+wire mem_fp_write;
+wire wb_fp_write; // 真实的写使能，由流水线 WB 寄存器驱动
+
 // 预测模块
 branch_predictor u_bp (
                      .clk             (clk),
@@ -301,6 +319,29 @@ reg_file u_reg_file (
              .wen   (wb_reg_write)
          );
 
+// FPR 文件
+fpr_file u_fpr_file (
+             .clk    (clk),
+             .rst_n  (rst_n),
+
+             // 读端口 1 (供 FADD/FMUL 等计算用)
+             .raddr1 (id_instr[19:15]),
+             .rdata1 (id_fs1_data),
+
+             // 读端口 2 (供 FSW 和计算用)
+             .raddr2 (id_instr[24:20]),
+             .rdata2 (id_fs2_data),
+
+             // 读端口 3 (供 FMADD 乘加用)
+             .raddr3 (id_instr[31:27]),
+             .rdata3 (id_fs3_data),
+
+             // 写端口 (来自 WB 阶段)
+             .we     (wb_fp_write),
+             .waddr  (wb_rd),       // 浮点和整数的目标寄存器地址都在 [11:7]
+             .wdata  (wb_final_data)
+         );
+
 imm_gen u_imm_gen (
             .instr(id_instr),
             .imm  (id_imm)
@@ -320,7 +361,11 @@ ctrl_unit u_ctrl_unit (
               .is_csr    (id_is_csr),
               .ecall     (id_ecall),
               .ebreak   (id_ebreak),
-              .mret      (id_mret)
+              .mret      (id_mret),
+
+              .fp_write    (id_fp_write),
+              .is_fp_load  (id_is_fp_load),
+              .is_fp_store (id_is_fp_store)
           );
 
 // Pipe Reg: ID/EX
@@ -385,7 +430,17 @@ id_ex_reg u_id_ex_reg (
               .ex_ebreak(ex_ebreak),
 
               .id_valid      (id_valid),
-              .ex_valid      (ex_valid)
+              .ex_valid      (ex_valid),
+
+              .id_fp_write    (id_fp_write),
+              .id_is_fp_load  (id_is_fp_load),
+              .id_is_fp_store (id_is_fp_store),
+              .id_fs2_data    (id_fs2_data),
+
+              .ex_fp_write    (ex_fp_write),
+              .ex_is_fp_load  (ex_is_fp_load),
+              .ex_is_fp_store (ex_is_fp_store),
+              .ex_fs2_data    (ex_fs2_data)
           );
 
 // Stage 3: EX (执行)
@@ -414,7 +469,10 @@ ex_stage u_ex_stage (
              .ex_rs1         (ex_rs1),
              .csr_rdata      (csr_rdata),
              .csr_we         (csr_we),
-             .csr_wdata      (csr_wdata)
+             .csr_wdata      (csr_wdata),
+
+             .ex_is_fp_store (ex_is_fp_store),
+             .ex_fs2_data    (ex_fs2_data)
          );
 
 // Pipe Reg: EX/MEM
@@ -438,7 +496,10 @@ ex_mem_reg u_ex_mem_reg (
                .mem_alu_result(mem_alu_result),
                .mem_wdata     (mem_wdata),
                .mem_rd        (mem_rd),
-               .mem_funct3    (mem_funct3)
+               .mem_funct3    (mem_funct3),
+
+               .ex_fp_write  (ex_fp_write),
+               .mem_fp_write (mem_fp_write)
            );
 
 // Stage 4: MEM (访存)
@@ -486,7 +547,10 @@ mem_wb_reg u_mem_wb_reg (
                .wb_mem_to_reg (wb_mem_to_reg),
                .wb_alu_result (wb_alu_result),
                .wb_rdata      (wb_mem_data),
-               .wb_rd         (wb_rd)
+               .wb_rd         (wb_rd),
+
+               .mem_fp_write (mem_fp_write),
+               .wb_fp_write  (wb_fp_write)
            );
 
 // Stage 5: WB (写回)

@@ -54,7 +54,11 @@ module ex_stage(
            output wire [31:0] forward_rs2_out,
 
            output wire        branch_en, //to if
-           output wire [31:0] branch_target
+           output wire [31:0] branch_target,
+
+           // FPU
+           input  wire        ex_is_fp_store,
+           input  wire [31:0] ex_fs2_data
        );
 
 reg  [31:0] forwarded_a;
@@ -92,7 +96,9 @@ always @(*) begin
 end
 
 // Store
-assign forward_rs2_out = forwarded_b;
+// Store
+// 如果是浮点存储 (FSW)，则把浮点寄存器的值送往内存；否则送整数寄存器的值(已前递)
+assign forward_rs2_out = ex_is_fp_store ? ex_fs2_data : forwarded_b;
 
 // A 端口：如果是 AUIPC/JAL，选 PC；否则选 rs1 (已前递)
 assign alu_in_a = ex_alu_src_a ? ex_pc : forwarded_a;

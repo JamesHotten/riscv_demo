@@ -14,7 +14,11 @@ module mem_wb_reg(
 
            output reg [31:0] wb_alu_result,
            output reg [31:0] wb_rdata,
-           output reg [4:0] wb_rd
+           output reg [4:0] wb_rd,
+
+           //FPU
+           input  wire mem_fp_write,
+           output reg  wb_fp_write
        );
 
 always @(posedge clk or negedge rst_n) begin
@@ -25,6 +29,8 @@ always @(posedge clk or negedge rst_n) begin
         wb_alu_result <= 32'h0;
         wb_rdata <= 32'h0;
         wb_rd <= 5'h0;
+
+        wb_fp_write <= 1'b0;
     end
     else begin
         wb_reg_write <= mem_reg_write;
@@ -33,6 +39,8 @@ always @(posedge clk or negedge rst_n) begin
         wb_alu_result <= mem_alu_result;
         wb_rdata <= mem_rdata;
         wb_rd <= mem_rd;
+
+        wb_fp_write <= mem_fp_write;
     end
 end
 endmodule

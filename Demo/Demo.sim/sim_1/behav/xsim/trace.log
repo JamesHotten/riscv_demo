@@ -1,21 +1,20 @@
 ========================================================================
  Time(ns) | Action Type | Details
 ========================================================================
-               70000 | REG_WRITE   | x1 <= 0x0000000a
-               80000 | REG_WRITE   | x2 <= 0x00000014
-               90000 | REG_WRITE   | x3 <= 0x0000001e
-              100000 | MEM_WRITE   | Addr: 0x00000064, Data: 0x0000001e
-              120000 | REG_WRITE   | x5 <= 0x0000001e
-              140000 | REG_WRITE   | x6 <= 0x00000023
-              150000 | REG_WRITE   | x7 <= 0x00000003
-              150000 | MISPREDICT  | Flush Triggered, Redirect to: 0x00000020
-              190000 | MISPREDICT  | Flush Triggered, Redirect to: 0x00000020
-              250000 | REG_WRITE   | x29 <= 0x00000000
-              260000 | REG_WRITE   | x8 <= 0x00000040
-              260000 | TRAP_ENTRY  | PC: 0x00000030, Cause: 0, Jump to: 0x00000040
-              320000 | REG_WRITE   | x10 <= 0x00000003
-              330000 | REG_WRITE   | x11 <= 0x00000030
-              340000 | REG_WRITE   | x11 <= 0x00000034
-              340000 | TRAP_MRET   | Return to: 0x00000034
-              380000 | MISPREDICT  | Flush Triggered, Redirect to: 0x00000038
-              390000 | REG_WRITE   | x9 <= 0x00000063
+               70000 | REG_WRITE   | x1 <= 0x00000100
+               80000 | REG_WRITE   | x2 <= 0x40400000
+               80000 | MEM_WRITE   | Addr: 0x00000100, Data: 0x40400000
+              100000 | FPR_WRITE   | f5 <= 0x40400000
+              130000 | MEM_WRITE   | Addr: 0x00000104, Data: 0x40400000
+              140000 | MISPREDICT  | Flush Triggered, Redirect to: 0x00000024
+              150000 | REG_WRITE   | x3 <= 0x40400000
+========================================================================
+ Time(ns) | Action Type | Details
+========================================================================
+               70000 | REG_WRITE   | x1 <= 0x00000100
+               80000 | REG_WRITE   | x2 <= 0x40400000
+               80000 | MEM_WRITE   | Addr: 0x00000100, Data: 0x40400000
+              100000 | FPR_WRITE   | f5 <= 0x40400000
+              130000 | MEM_WRITE   | Addr: 0x00000104, Data: 0x00000000
+              140000 | MISPREDICT  | Flush Triggered, Redirect to: 0x00000024
+              150000 | REG_WRITE   | x3 <= 0x00000000

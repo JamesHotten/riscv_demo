@@ -1,55 +1,9 @@
 Time resolution is 1 ps
 Simulation Start! Generating trace.log...
-Time                70000: Write Reg x1 = 0000000a
-Time                80000: Write Reg x2 = 00000014
-Time                90000: Write Reg x3 = 0000001e
-Time               120000: Write Reg x5 = 0000001e
-Time               140000: Write Reg x6 = 00000023
-Time               150000: Write Reg x7 = 00000003
-Time               155000: [Predictor] Mispredict detected! Target PC should be 00000020
-Time               195000: [Predictor] Mispredict detected! Target PC should be 00000020
-Time               250000: Write Reg x29 = 00000000
-Time               260000: Write Reg x8 = 00000040
-Time               320000: Write Reg x10 = 00000003
-Time               330000: Write Reg x11 = 00000030
-Time               340000: Write Reg x11 = 00000034
-Time               385000: [Predictor] Mispredict detected! Target PC should be 00000038
-Time               390000: Write Reg x9 = 00000063
+Time                70000: Write Reg x1 = 00000100
+Time                80000: Write Reg x2 = 40400000
+Time               100000: Write FPR f5 = 40400000
+Time               145000: [Predictor] Mispredict detected! Target PC should be 00000024
+Time               150000: Write Reg x3 = 40400000
 Simulation Timeout. Check trace.log for detailed execution trace!
-$finish called at time : 3030 ns : File "C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sim_1/new/tb_riscv_top.v" Line 47
-Simulation Start! Generating trace.log...
-Time                70000: Write Reg x1 = 0000000a
-Time                80000: Write Reg x2 = 00000014
-Time                90000: Write Reg x3 = 0000001e
-Time               120000: Write Reg x5 = 0000001e
-Time               140000: Write Reg x6 = 00000023
-Time               150000: Write Reg x7 = 00000003
-Time               155000: [Predictor] Mispredict detected! Target PC should be 00000020
-Time               195000: [Predictor] Mispredict detected! Target PC should be 00000020
-Time               250000: Write Reg x29 = 00000000
-Time               260000: Write Reg x8 = 00000040
-Time               320000: Write Reg x10 = 00000003
-Time               330000: Write Reg x11 = 00000030
-Time               340000: Write Reg x11 = 00000034
-Time               385000: [Predictor] Mispredict detected! Target PC should be 00000038
-Time               390000: Write Reg x9 = 00000063
-Simulation Timeout. Check trace.log for detailed execution trace!
-$finish called at time : 3030 ns : File "C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sim_1/new/tb_riscv_top.v" Line 47
-Simulation Start! Generating trace.log...
-Time                70000: Write Reg x1 = 0000000a
-Time                80000: Write Reg x2 = 00000014
-Time                90000: Write Reg x3 = 0000001e
-Time               120000: Write Reg x5 = 0000001e
-Time               140000: Write Reg x6 = 00000023
-Time               150000: Write Reg x7 = 00000003
-Time               155000: [Predictor] Mispredict detected! Target PC should be 00000020
-Time               195000: [Predictor] Mispredict detected! Target PC should be 00000020
-Time               250000: Write Reg x29 = 00000000
-Time               260000: Write Reg x8 = 00000040
-Time               320000: Write Reg x10 = 00000003
-Time               330000: Write Reg x11 = 00000030
-Time               340000: Write Reg x11 = 00000034
-Time               385000: [Predictor] Mispredict detected! Target PC should be 00000038
-Time               390000: Write Reg x9 = 00000063
-Simulation Timeout. Check trace.log for detailed execution trace!
-$finish called at time : 3030 ns : File "C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sim_1/new/tb_riscv_top.v" Line 47
+$finish called at time : 5030 ns : File "C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sim_1/new/tb_riscv_top.v" Line 47

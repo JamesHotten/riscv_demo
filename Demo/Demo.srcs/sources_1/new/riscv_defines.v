@@ -58,4 +58,13 @@
 `define FUNCT12_MRET   12'h302 // Machine Return
 `define FUNCT12_EBREAK  12'h001 // Breakpoint
 
+        // RV32F
+`define LOAD_FP  7'b0000111 // flw: 浮点加载
+`define STORE_FP 7'b0100111 // fsw: 浮点存储
+`define OP_FP    7'b1010011 // 浮点数据处理 (fadd.s, fsub.s, fcvt...)
+`define FMADD    7'b1000011 // fmadd.s: 浮点乘加
+`define FMSUB    7'b1000111 // fmsub.s: 浮点乘减
+`define FNMSUB   7'b1001011 // fnmsub.s
+`define FNMADD   7'b1001111 // fnmadd.s
+
 `endif

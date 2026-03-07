@@ -31,12 +31,12 @@ wire [6:0] opcode = instr[6:0];
 always @(*) begin
     imm = 32'b0;
     case (opcode)
-        `OP_IMM, `LOAD, `JALR: begin // I-Type
+        `OP_IMM, `LOAD, `LOAD_FP, `JALR: begin // I-Type
             // {20个符号位, 12位立即数}
             imm = {{20{instr[31]}}, instr[31:20]};
         end
 
-        `STORE: begin // S-Type
+        `STORE, `STORE_FP: begin // S-Type
             // {20个符号位, 高7位, 低5位}
             imm = {{20{instr[31]}}, instr[31:25], instr[11:7]};
         end

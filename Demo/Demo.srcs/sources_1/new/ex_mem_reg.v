@@ -48,7 +48,10 @@ module ex_mem_reg(
            output reg  [31:0] mem_wdata,       // Store 指令真正要写进内存的数据
            output reg  [4:0]  mem_rd,
 
-           output reg  [2:0] mem_funct3
+           output reg  [2:0] mem_funct3,
+
+           input  wire ex_fp_write,
+           output reg  mem_fp_write //FPU
        );
 
 always @(posedge clk or negedge rst_n) begin
@@ -63,6 +66,8 @@ always @(posedge clk or negedge rst_n) begin
         mem_wdata      <= 32'd0;
         mem_rd         <= 5'd0;
         mem_funct3 <= 3'b0;
+
+        mem_fp_write <= 1'b0;
     end
     else if (flush_mem) begin
         // 如果被中断斩杀，强行插入气泡，清空写控制信号
@@ -74,6 +79,8 @@ always @(posedge clk or negedge rst_n) begin
         mem_wdata      <= 32'd0;
         mem_rd         <= 5'd0;
         mem_funct3     <= 3'b0;
+
+        mem_fp_write <= 1'b0;
     end
     else begin
         // 正常流水线步进：把 EX 阶段的成果打包送到 MEM 阶段
@@ -87,6 +94,8 @@ always @(posedge clk or negedge rst_n) begin
         mem_wdata      <= ex_rs2_data;
         mem_rd         <= ex_rd;
         mem_funct3 <= ex_funct3;
+
+        mem_fp_write <= ex_fp_write;
     end
 end
 

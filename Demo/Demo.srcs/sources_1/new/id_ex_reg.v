@@ -89,7 +89,18 @@ module id_ex_reg(
            output reg         ex_ecall,
            output reg         ex_ebreak,
            output reg         ex_mret,
-           output reg  [11:0] ex_csr_addr
+           output reg  [11:0] ex_csr_addr,
+
+           // FPU
+           input  wire        id_fp_write,
+           input  wire        id_is_fp_load,
+           input  wire        id_is_fp_store,
+           input  wire [31:0] id_fs2_data, //从浮点寄存器堆读出的数据
+
+           output reg         ex_fp_write,
+           output reg         ex_is_fp_load,
+           output reg         ex_is_fp_store,
+           output reg  [31:0] ex_fs2_data
        );
 
 always @(posedge clk or negedge rst_n) begin
@@ -125,6 +136,11 @@ always @(posedge clk or negedge rst_n) begin
         ex_ebreak <= 1'b0;
 
         ex_valid <= 1'b0;
+
+        ex_fp_write    <= 1'b0;
+        ex_is_fp_load  <= 1'b0;
+        ex_is_fp_store <= 1'b0;
+        ex_fs2_data    <= 32'b0;
     end
     else if (flush_ex) begin
         // 发生冲刷时，把“写使能”相关信号清零，变成 NOP 操作
@@ -151,6 +167,11 @@ always @(posedge clk or negedge rst_n) begin
         ex_csr_addr <= 12'b0;
         ex_valid     <= 1'b0;
         ex_ebreak <= 1'b0;
+
+        ex_fp_write    <= 1'b0;
+        ex_is_fp_load  <= 1'b0;
+        ex_is_fp_store <= 1'b0;
+        ex_fs2_data    <= 32'b0;
 
     end
     else begin
@@ -186,6 +207,11 @@ always @(posedge clk or negedge rst_n) begin
         ex_csr_addr <= id_csr_addr;
         ex_valid <= id_valid;
         ex_ebreak <= id_ebreak;
+
+        ex_fp_write    <= id_fp_write;
+        ex_is_fp_load  <= id_is_fp_load;
+        ex_is_fp_store <= id_is_fp_store;
+        ex_fs2_data    <= id_fs2_data;
     end
 end
 

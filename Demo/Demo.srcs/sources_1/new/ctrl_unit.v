@@ -39,7 +39,12 @@ module ctrl_unit(
            output reg is_csr,
            output reg ecall,
            output reg ebreak,
-           output reg mret
+           output reg mret,
+
+           output reg fp_write,    // 是否写浮点寄存器堆
+           output reg is_fp_load,  // 是否是 FLW 指令
+           output reg is_fp_store  // 是否是 FSW 指令
+
        );
 
 wire [6:0] opcode = instr[6:0];
@@ -59,7 +64,10 @@ always @(*) begin
     is_csr     = 1'b0;
     ecall      = 1'b0;
     ebreak = 1'b0;
-    mret       = 1'b0; //default
+    mret       = 1'b0;
+    fp_write    = 1'b0; // 默认不写浮点寄存器
+    is_fp_load  = 1'b0;
+    is_fp_store = 1'b0; //default
 
     case (opcode)
         `OP_REG: begin // R-Type: add, sub, and, or...
@@ -181,6 +189,28 @@ always @(*) begin
             end
         end
 
+        `LOAD_FP: begin // flw (比如: flw f2, 20(x5))
+            // 注意：地址计算依然用整数 ALU，所以 alu_src_b 设为立即数，alu_ctrl 是加法
+            alu_src_b   = 1'b1;
+            alu_ctrl    = `ALU_ADD;
+            mem_read    = 1'b1;
+            mem_to_reg  = 1'b1;
+            fp_write    = 1'b1;     //浮点寄存器
+            is_fp_load  = 1'b1;     // 标记为浮点 load
+        end
+
+        `STORE_FP: begin // fsw (比如: fsw f2, 20(x5))
+            alu_src_b   = 1'b1;     // 整数 rs1 + imm 计算地址
+            alu_ctrl    = `ALU_ADD;
+            mem_write   = 1'b1;
+            is_fp_store = 1'b1;     // 浮点寄存器 rs2
+        end
+
+        `OP_FP, `FMADD, `FMSUB, `FNMSUB, `FNMADD: begin
+            // 绝大部分纯浮点运算指令，都把结果写回 FPR
+            // (注意：fcvt.w.s、feq.s 等指令是写回整数寄存器的，funct5 细分)
+            fp_write = 1'b1;
+        end
         default:
             ; // 保持默认值 (全0)
     endcase
