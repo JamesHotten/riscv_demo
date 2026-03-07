@@ -34,15 +34,15 @@ module if_stage(
            input         ex_branch_taken,  // EX 阶段算出的实际是否该跳
            input  [31:0] ex_target_addr,   // EX 阶段算出的实际目标
            input         pred_taken_ex,    // 预测时给出的结果
-           input  [31:0] pred_target_ex,
+           input  [31:0] pred_target_ex,   // 预测时给出的目标地址
            input  [31:0] ex_pc,            // EX 阶段的PC
 
-           input         ex_ecall,
-           input         ex_ebreak,
-           input         ex_mret,
-           input  [31:0] mtvec_out,
-           input  [31:0] mepc_out,
-           input irq_trap,
+           input         ex_ecall,         // EX 阶段 ECALL 异常
+           input         ex_ebreak,        // EX 阶段 EBREAK 异常
+           input         ex_mret,          // EX 阶段 MRET 指令
+           input  [31:0] mtvec_out,        // 异常向量基地址 (来自 CSR 文件)
+           input  [31:0] mepc_out,         // 异常返回地址 (来自 CSR 文件)
+           input         irq_trap,         // 外部中断请求 (如定时器中断)
 
            output [31:0] if_pc,
            output        mispredict

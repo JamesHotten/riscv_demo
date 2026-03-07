@@ -25,17 +25,17 @@ module clint(
            input  rst_n,
 
            // MMIO interface (0x0200_xxxx)
-           input  [31:0] mem_addr,
-           input  [31:0] mem_wdata,
-           input  mem_we,
+           input  [31:0] mem_addr,    // 访问地址
+           input  [31:0] mem_wdata,   // 写入数据
+           input  mem_we,             // 写使能
 
            output reg [31:0] mem_rdata,
 
-           output timer_irq
+           output timer_irq         // 定时器中断输出 (连接到 CPU 的 mtip 引脚)
        );
 
-reg [63:0] mtime; // timer
-reg [63:0] mtimecmp; // timer compare trigger
+reg [63:0] mtime;    // 64 位自由运行计数器，每个时钟周期 +1
+reg [63:0] mtimecmp; // 64 位比较值，当 mtime >= mtimecmp 时触发中断
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n)
@@ -59,14 +59,19 @@ end
 // 操作系统的读取请求
 always @(*) begin
     if      (mem_addr == 32'h02004000)
+        // 读取 mtimecmp 低 32 位
         mem_rdata = mtimecmp[31:0];
     else if (mem_addr == 32'h02004004)
+        // 读取 mtimecmp 高 32 位
         mem_rdata = mtimecmp[63:32];
     else if (mem_addr == 32'h0200BFF8)
+        // 读取 mtime 低 32 位 (只读)
         mem_rdata = mtime[31:0];
     else if (mem_addr == 32'h0200BFFC)
+        // 读取 mtime 高 32 位 (只读)
         mem_rdata = mtime[63:32];
     else
+        // 未映射地址返回 0
         mem_rdata = 32'b0;
 end
 

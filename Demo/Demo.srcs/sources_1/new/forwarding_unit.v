@@ -25,15 +25,15 @@ module forwarding_unit(
            input [4:0] ex_rs2,
 
            // mem stage
-           input  [4:0] mem_rd,
-           input  mem_reg_write,
+           input  [4:0] mem_rd,       // MEM 阶段要写回的目标寄存器地址
+           input  mem_reg_write,      // MEM 阶段寄存器写使能
 
            // wb stage
-           input  [4:0] wb_rd,
-           input  wb_reg_write,
+           input  [4:0] wb_rd,        // WB 阶段要写回的目标寄存器地址
+           input  wb_reg_write,       // WB 阶段寄存器写使能
 
            output reg [1:0] forward_a, // rs1
-           output reg [1:0] forward_b //rs2
+           output reg [1:0] forward_b  //rs2
        );
 
 // rs1

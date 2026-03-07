@@ -15,5 +15,3 @@ Time               330000: Write Reg x11 = 00000030
 Time               340000: Write Reg x11 = 00000034
 Time               385000: [Predictor] Mispredict detected! Target PC should be 00000038
 Time               390000: Write Reg x9 = 00000063
-Simulation Timeout. Check trace.log for detailed execution trace!
-$finish called at time : 3030 ns : File "C:/Users/JamesHotten/Desktop/JiChuang/Code/Demo/Demo.srcs/sim_1/new/tb_riscv_top.v" Line 47

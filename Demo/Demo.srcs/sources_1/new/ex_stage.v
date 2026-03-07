@@ -24,9 +24,9 @@ module ex_stage(
 
            // inputs from id
            input [31:0] ex_pc,
-           input [31:0] ex_rdata1,
-           input [31:0] ex_rdata2,
-           input [31:0] ex_imm,
+           input [31:0] ex_rdata1, // rs1
+           input [31:0] ex_rdata2, // rs2
+           input [31:0] ex_imm,    // 立即数
 
            input  ex_alu_src_a,
            input  ex_alu_src_b,
@@ -106,18 +106,16 @@ alu u_alu(
         .result(alu_calc_out)
     );
 
-// branch
-
 // PC + imm (用于 Branch 和 JAL)
 assign pc_plus_4 = ex_pc + 32'd4;
-// assign alu_result = ex_jump ? pc_plus_4 : alu_calc_out;
+
+// 优先级：CSR 指令 > 跳转指令 > 普通 ALU 计算
+// CSR 指令：ALU 结果 = CSR 旧值 (写回 rd)
+// JAL 指令：ALU 结果 = PC + 4 (返回地址)
+// 其他指令：ALU 结果 = 计算结果
 assign alu_result = ex_is_csr ? csr_rdata :
        ex_jump   ? pc_plus_4 : alu_calc_out;
 
-// 1. 如果是无条件跳转 (JAL, JALR)，必定跳转 (ex_jump == 1)
-// 2. 如果是条件分支 (Branch)，并且 ALU 算出来的结果为 0 (相等，即 beq 成立)，则跳转。
-// JALR 的目标是 (rs1 + imm)，也就是 ALU 的计算结果 (alu_src_a=0, alu_src_b=1)
-// JAL  的目标是 (PC  + imm)，我们需要专门的加法器
 wire [31:0] pc_plus_imm = ex_pc + ex_imm;
 
 // 跳转目标计算：

@@ -28,10 +28,10 @@ module ctrl_unit(
            output reg alu_src_b,
            output reg [3:0] alu_ctrl,
 
-           output reg mem_write, //sw
-           output reg mem_read, //lw
-           output reg branch,
-           output reg jump,
+           output reg mem_write,      // 内存写使能 (SW 指令)
+           output reg mem_read,       // 内存读使能 (LW 指令)
+           output reg branch,         // 分支指令标志 (BEQ, BNE 等)
+           output reg jump,           // 跳转指令标志 (JAL, JALR)
 
            output reg reg_write,
            output reg mem_to_reg,

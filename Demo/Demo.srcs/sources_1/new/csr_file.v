@@ -36,23 +36,23 @@ module csr_file(
 
            input  timer_irq, //来自 CLINT 的中断信号
            input  is_mret,  // 流水线正在执行 MRET
-           input  ex_valid,
+           input  ex_valid, // 执行阶段指令有效
 
            output irq_trap, //中断冲刷
-           output [31:0] mepc_out, // 返回地址
-           output [31:0] mtvec_out, // 异常向量地址
+           output [31:0] mepc_out,    // 异常返回地址 (输出到流水线)
+           output [31:0] mtvec_out,   // 异常向量基地址 (输出到流水线)
            output mie_out //全局中断使能
        );
 
-reg [31:0] mstatus;
-reg [31:0] mtvec;
-reg [31:0] mepc;
-reg [31:0] mcause;
-reg [31:0] mscratch;
+reg [31:0] mstatus;    // 机器状态寄存器
+reg [31:0] mtvec;      // 机器异常向量基地址
+reg [31:0] mepc;       // 机器异常程序计数器
+reg [31:0] mcause;     // 机器异常原因
+reg [31:0] mscratch;   // 机器模式临时寄存器 (供软件使用)
 
-wire do_trap = trap_en || irq_trap;
+wire do_trap = trap_en || irq_trap; // 同步异常 或 异步中断
 assign mie_out = mstatus[3]; // mstatus 的第 3 位是 MIE (全局中断使能)
-// 只有当定时器请求 + CPU允许中断 + EX阶段有一条真实的有效指令时，才触发中断打断它
+// 定时器请求 + CPU允许中断 + EX阶段有一条真实的有效指令时触发中断
 assign irq_trap = timer_irq && mie_out && ex_valid;
 
 // 读
@@ -88,7 +88,7 @@ always @(posedge clk or negedge rst_n) begin
     end
     else if (do_trap) begin
         // 硬件自动更新 (发生同步异常 异步中断)
-        mepc   <= trap_pc;
+        mepc   <= trap_pc; // 保存异常发生时的 PC 到 mepc
 
         // 如果是定时器中断，写死 Cause 为 0x80000007；如果是 ECALL，用传入的 trap_cause
         mcause <= irq_trap ? 32'h80000007 : trap_cause;

@@ -164,8 +164,48 @@ wire        irq_trap;
 wire id_valid;
 wire ex_valid;
 
-// ==================== 模块例化区 ====================
+// 预测模块
+branch_predictor u_bp (
+                     .clk             (clk),
+                     .rst_n           (rst_n),
+                     .if_pc           (if_pc),
+                     .pred_taken      (pred_taken_if),
+                     .pred_target     (pred_target_if),
 
+                     .ex_pc           (ex_pc),
+                     .ex_is_cond_branch(ex_branch),
+                     .ex_is_jump       (ex_jump),
+                     .ex_actual_taken (ex_branch_taken),
+                     .ex_actual_target(ex_target_addr)
+                 );
+
+// CSR 文件
+wire trap_en_signal = ex_ecall || ex_ebreak;
+wire [31:0] trap_cause_signal = ex_ebreak ? 32'd3 : 32'd11;
+csr_file u_csr (
+             .clk        (clk),
+             .rst_n      (rst_n),
+
+             .csr_addr   (ex_csr_addr),
+             .csr_we     (csr_we),
+             .csr_wdata  (csr_wdata),
+             .csr_rdata  (csr_rdata),
+
+             .trap_pc    (ex_pc),
+             .trap_en   (trap_en_signal),
+             .trap_cause(trap_cause_signal),
+
+             .mepc_out   (mepc_out),
+             .mtvec_out  (mtvec_out),
+             .mie_out    (mie_out),
+
+             .timer_irq  (timer_irq),
+             .is_mret    (ex_mret),
+             .irq_trap   (irq_trap),
+             .ex_valid      (ex_valid)
+         );
+
+// hazard & control
 hazard_detection_unit u_hazard_detect (
                           .id_rs1      (id_rs1),
                           .id_rs2      (id_rs2),
@@ -185,6 +225,7 @@ hazard_detection_unit u_hazard_detect (
                           .irq_trap    (irq_trap)
                       );
 
+// forwarding unit
 forwarding_unit u_forwarding (
                     .ex_rs1       (ex_rs1),
                     .ex_rs2       (ex_rs2),
@@ -408,7 +449,7 @@ mem_ctrl u_mem_ctrl (
              .mem_write_en (mem_mem_write),
              .dmem_we      (dmem_we),
              .dmem_wdata   (dmem_wdata_aligned),
-             .dmem_rdata   (raw_rdata_bus), // ✅ 接入整理好的核心总线
+             .dmem_rdata   (raw_rdata_bus),
              .rdata_out    (mem_rdata)
          );
 
@@ -454,46 +495,6 @@ wb_stage u_wb_stage (
              .wb_mem_data  (wb_mem_data),
              .wb_mem_to_reg(wb_mem_to_reg),
              .wb_final_data(wb_final_data)
-         );
-
-// 预测模块
-branch_predictor u_bp (
-                     .clk             (clk),
-                     .rst_n           (rst_n),
-                     .if_pc           (if_pc),
-                     .pred_taken      (pred_taken_if),
-                     .pred_target     (pred_target_if),
-
-                     .ex_pc           (ex_pc),
-                     .ex_is_cond_branch(ex_branch),
-                     .ex_is_jump       (ex_jump),
-                     .ex_actual_taken (ex_branch_taken),
-                     .ex_actual_target(ex_target_addr)
-                 );
-
-wire trap_en_signal = ex_ecall || ex_ebreak;
-wire [31:0] trap_cause_signal = ex_ebreak ? 32'd3 : 32'd11;
-csr_file u_csr (
-             .clk        (clk),
-             .rst_n      (rst_n),
-
-             .csr_addr   (ex_csr_addr),
-             .csr_we     (csr_we),
-             .csr_wdata  (csr_wdata),
-             .csr_rdata  (csr_rdata),
-
-             .trap_pc    (ex_pc),
-             .trap_en   (trap_en_signal),
-             .trap_cause(trap_cause_signal),
-
-             .mepc_out   (mepc_out),
-             .mtvec_out  (mtvec_out),
-             .mie_out    (mie_out),
-
-             .timer_irq  (timer_irq),
-             .is_mret    (ex_mret),
-             .irq_trap   (irq_trap),
-             .ex_valid      (ex_valid)
          );
 
 endmodule

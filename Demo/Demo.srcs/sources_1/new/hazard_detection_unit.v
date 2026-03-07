@@ -63,11 +63,10 @@ always @(*) begin
     end
     // Load-Use 数据冒险停顿
     else if(ex_mem_read && (ex_rd != 0) && (ex_rd == id_rs1 || ex_rd == id_rs2)) begin
-        stall_id = 1;
-        stall_if = 1;
-        flush_ex = 1;
+        stall_id  = 1'b1;  // ID 阶段停顿 (IF/ID 寄存器保持)
+        stall_if  = 1'b1;  // IF 阶段停顿 (PC 保持不变)
+        flush_ex  = 1'b1;  // EX 阶段冲刷 (插入气泡)
     end
-
 end
 
 endmodule

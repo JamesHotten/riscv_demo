@@ -39,11 +39,12 @@ module reg_file(
 reg [31:0] regs [31:0];
 integer i;
 
-assign rdata1 = (raddr1 == 0) ? 32'b0 :
-       (wen && waddr == raddr1) ? wdata :
-       regs[raddr1];
+// x0 恒为 0 > 写转发 (同周期读写同一寄存器) > 正常读寄存器
+assign rdata1 = (raddr1 == 5'd0) ? 32'b0 :          // x0 恒为 0
+       (wen && waddr == raddr1) ? wdata :   // 写转发：同周期写同一寄存器，直接输出 wdata
+       regs[raddr1];                        // 正常读寄存器
 
-assign rdata2 = (raddr2 == 0) ? 32'b0 :
+assign rdata2 = (raddr2 == 5'd0) ? 32'b0 :
        (wen && waddr == raddr2) ? wdata :
        regs[raddr2];
 

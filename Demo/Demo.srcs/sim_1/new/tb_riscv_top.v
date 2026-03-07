@@ -40,7 +40,7 @@ initial begin
 
     $display("Simulation Start! Generating trace.log...");
 
-    #3000; // 仿真时间
+    #5000; // 仿真时间
 
     $display("Simulation Timeout. Check trace.log for detailed execution trace!");
     $fclose(trace_file);

@@ -20,33 +20,32 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module branch_predictor(
+module branch_predictor( // BTB (分支目标缓冲) + BHT (分支历史表) + PHT (模式历史表)
            input  clk,
            input  rst_n,
 
            // if_stage 预测
-           input  [31:0] if_pc,
-           output  pred_taken,
-           output  [31:0] pred_target,
+           input  [31:0] if_pc,          // 当前取指阶段的 PC 地址
+           output  pred_taken,           // 预测结果：是否跳转
+           output  [31:0] pred_target,   // 预测的跳转目标地址
 
            // ex_stage 更新
            input  [31:0] ex_pc,
-           //    input  ex_is_branch,
            input  ex_is_cond_branch, // 条件分支 (BEQ, BNE等)
            input  ex_is_jump,       // 无条件跳转 (JAL, JALR等)
            input  ex_actual_taken,
            input  [31:0] ex_actual_target
        );
-// 把条件分支和无条件跳转在预测器中彻底剥离开来：BTB（目标地址）两者都记录，但 BHT 和 PHT 只允许条件分支去更新。
+// 把条件分支和无条件跳转在预测器中剥离：BTB（目标地址）两者都记录，但 BHT 和 PHT 只允许条件分支去更新。
 parameter INDEX_BITS = 6; // 64 entries
 parameter DEPTH = 1 << INDEX_BITS;
-parameter HIST_BITS = 4;
+parameter HIST_BITS = 4; // 分支历史寄存器位数：4 位
 
 // BTB
-reg [31:0] btb_tags [DEPTH-1:0];
-reg [31:0] btb_targets [DEPTH-1:0];
-reg        valid [DEPTH-1:0];
-reg        btb_is_jump [DEPTH-1:0]; // 记录是否无条件跳转
+reg [31:0] btb_tags [DEPTH-1:0];         // 存储 PC 标签，用于匹配
+reg [31:0] btb_targets [DEPTH-1:0];      // 存储预测的跳转目标地址
+reg        valid [DEPTH-1:0];            // 表项有效位
+reg        btb_is_jump [DEPTH-1:0];      // 记录是否无条件跳转
 
 // BHT
 reg [HIST_BITS-1:0] bht [DEPTH-1:0];
@@ -61,18 +60,20 @@ wire [INDEX_BITS-1:0] if_idx = if_pc[INDEX_BITS+1:2];
 wire [31:0]           if_tag = if_pc;
 
 wire [HIST_BITS-1:0]  if_hist    = bht[if_idx];            // 查BHT拿到历史
-wire [PHT_INDEX_BITS-1:0] if_pht_idx = {if_idx, if_hist};  // 拼接哈希
+wire [PHT_INDEX_BITS-1:0] if_pht_idx = {if_idx, if_hist};  // 拼接索引和历史哈希
 
+// BTB 命中检测：表项有效且标签匹配
 wire stored_valid = valid[if_idx];
 wire hit = stored_valid && (btb_tags[if_idx] == if_tag);
+
 wire [1:0] counter_if = pht[if_pht_idx];                   // 查PHT拿到计数器
 
-wire stored_is_jump = btb_is_jump[if_idx];
+wire stored_is_jump = btb_is_jump[if_idx];  // 获取 BTB 中存储的分支类型
 assign pred_taken  = hit && (stored_is_jump || counter_if[1] == 1'b1);      // 预测状态 (10 或 11 预测跳)
-assign pred_target = hit ? btb_targets[if_idx] : 32'b0;
+assign pred_target = hit ? btb_targets[if_idx] : 32'b0; // 预测目标地址
 
 // EX 阶段更新逻辑
-wire [INDEX_BITS-1:0] ex_idx = ex_pc[INDEX_BITS+1:2];
+wire [INDEX_BITS-1:0] ex_idx = ex_pc[INDEX_BITS+1:2];   // 使用执行阶段的 PC 计算索引
 wire [HIST_BITS-1:0]  ex_hist = bht[ex_idx];               // 拿到之前预测时用的旧历史
 wire [PHT_INDEX_BITS-1:0] ex_pht_idx = {ex_idx, ex_hist};
 
@@ -95,6 +96,7 @@ always @(posedge clk or negedge rst_n) begin
         btb_targets[ex_idx] <= ex_actual_target;
         btb_is_jump[ex_idx] <= ex_is_jump;
 
+        // 仅条件分支更新 PHT 和 BHT
         if (ex_is_cond_branch) begin
             // 更新 PHT (2位饱和计数器)
             if (ex_actual_taken) begin
