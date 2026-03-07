@@ -60,6 +60,8 @@ always @(*) begin
     case (csr_addr)
         12'h300:
             csr_rdata = mstatus;
+        12'h301:
+            csr_rdata = 32'h40000100; // misa (最高位01代表32位，第8位I代表支持基础整数集)
         12'h305:
             csr_rdata = mtvec;
         12'h340:
@@ -68,6 +70,8 @@ always @(*) begin
             csr_rdata = mepc;
         12'h342:
             csr_rdata = mcause;
+        12'hF14:
+            csr_rdata = 32'h00000000; // mhartid (单核处理器，写死为0)
         default:
             csr_rdata = 32'b0;
     endcase
@@ -100,14 +104,15 @@ always @(posedge clk or negedge rst_n) begin
     else if (csr_we) begin
         // 软件指令写
         case (csr_addr)
+            // 写入 mstatus 时，使用掩码保护，只允许修改 MPIE(7) 和 MIE(3)
             12'h300:
-                mstatus <= csr_wdata;
+                mstatus  <= {mstatus[31:8], csr_wdata[7], mstatus[6:4], csr_wdata[3], mstatus[2:0]};
             12'h305:
                 mtvec   <= csr_wdata;
             12'h340:
                 mscratch<= csr_wdata;
             12'h341:
-                mepc    <= csr_wdata;
+                mepc     <= {csr_wdata[31:2], 2'b00}; // PC 必须 4 字节对齐，强制抹零低 2 位
             12'h342:
                 mcause  <= csr_wdata;
             default:

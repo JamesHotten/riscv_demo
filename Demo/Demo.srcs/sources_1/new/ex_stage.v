@@ -157,22 +157,23 @@ always @(*) begin
     csr_wdata = 32'b0;
     if (ex_is_csr) begin
         csr_we = 1'b1;
+        // funct3[1:0] 决定了 CSR 的操作类型
         case (ex_funct3[1:0])
             2'b01:
-                csr_wdata = csr_operand;                        // CSRRW / CSRRWI
-            2'b10: begin
-                csr_wdata = csr_rdata | csr_operand;        // CSRRS / CSRRSI
-                if (ex_rs1 == 5'b0)
-                    csr_we = 1'b0;          // 操作数为0时只读不写
-            end
-            2'b11: begin
-                csr_wdata = csr_rdata & ~csr_operand;       // CSRRC / CSRRCI
-                if (ex_rs1 == 5'b0)
-                    csr_we = 1'b0;          // 操作数为0时只读不写
-            end
+                csr_wdata = csr_operand;               // CSRRW / CSRRWI (直接覆盖写入)
+            2'b10:
+                csr_wdata = csr_rdata | csr_operand;   // CSRRS / CSRRSI (按位或，置 1)
+            2'b11:
+                csr_wdata = csr_rdata & ~csr_operand;  // CSRRC / CSRRCI (按位与非，清 0)
             default:
                 csr_we = 1'b0;
         endcase
+
+        // 对于 RS 和 RC 指令，如果操作数(rs1或zimm)为0，
+        // 则表示"只读不写"
+        if (ex_funct3[1:0] != 2'b01 && csr_operand == 32'b0) begin
+            csr_we = 1'b0;
+        end
     end
 end
 endmodule

@@ -16,9 +16,21 @@ initial begin
         #5 clk = ~clk;
 end
 
-initial begin
+integer trace_file;
 
+initial begin
+    // 读取机器码
     $readmemh("test.hex", u_dut.u_imem.rom);
+
+    // 创建 trace.log 文件
+    trace_file = $fopen("trace.log", "w");
+    if (trace_file == 0) begin
+        $display("Error: Failed to open trace.log!");
+        $finish;
+    end
+    $fdisplay(trace_file, "========================================================================");
+    $fdisplay(trace_file, " Time(ns) | Action Type | Details");
+    $fdisplay(trace_file, "========================================================================");
 
     rst_n = 1;
     #10;
@@ -26,34 +38,51 @@ initial begin
     #20;
     rst_n = 1;  // 复位释放，CPU 开始运行
 
-    $display("Simulation Start!");
+    $display("Simulation Start! Generating trace.log...");
 
-    #5000;
+    #3000; // 仿真时间
 
-    $display("Simulation Timeout.");
+    $display("Simulation Timeout. Check trace.log for detailed execution trace!");
+    $fclose(trace_file);
     $finish;
 end
 
-always @(posedge clk) begin
-    if (u_dut.wb_reg_write && u_dut.wb_rd != 0) begin
-        $display("Time %t: Write Reg x%0d = %h", $time, u_dut.wb_rd, u_dut.wb_final_data);
-    end
-end
+// 在时钟下降沿捕获稳定状态
+always @(negedge clk) begin
+    if (rst_n) begin
+        // 监控寄存器写回 (WB 阶段)
+        if (u_dut.u_wb_stage.wb_mem_to_reg ? u_dut.u_mem_wb_reg.wb_reg_write : u_dut.u_ex_mem_reg.mem_reg_write) begin
+            if (u_dut.wb_rd != 0) begin
+                $fdisplay(trace_file, "%9t | REG_WRITE   | x%0d <= 0x%08h",
+                          $time, u_dut.wb_rd, u_dut.wb_final_data);
+                // 同时在控制台打印，方便实时观看
+                $display("Time %9t: Write Reg x%0d = %08h", $time, u_dut.wb_rd, u_dut.wb_final_data);
+            end
+        end
 
-always @(posedge clk) begin
-    if (u_dut.u_csr.irq_trap) begin
-        $display("==================================================");
-        $display("Time %t: [TRAP] Timer Interrupt Triggered!", $time);
-        $display("  -> Saving to MEPC   : %h", u_dut.u_csr.trap_pc);
-        $display("  -> ID Stage PC      : %h", u_dut.id_pc);
-        $display("  -> EX Stage PC      : %h (Valid: %b)", u_dut.ex_pc, u_dut.ex_valid);
-        $display("  -> EX Stage Op      : Write Reg x%0d", u_dut.u_id_ex_reg.ex_rd); // 假设你的 id_ex_reg 例化名为 u_id_ex_reg
-        $display("==================================================");
-    end
+        // 监控内存写入 (MEM 阶段)
+        if (u_dut.u_mem_ctrl.mem_write_en) begin
+            $fdisplay(trace_file, "%9t | MEM_WRITE   | Addr: 0x%08h, Data: 0x%08h",
+                      $time, u_dut.u_mem_ctrl.addr, u_dut.u_mem_ctrl.dmem_wdata);
+        end
 
-    // 监视一下 MRET 异常返回的瞬间
-    if (u_dut.u_csr.is_mret) begin
-        $display("Time %t: [MRET] Return from Interrupt! Jumping back to: %h", $time, u_dut.u_csr.mepc_out);
+        // 监控异常与中断陷入
+        if (u_dut.u_csr.irq_trap || u_dut.u_csr.trap_en) begin
+            $fdisplay(trace_file, "%9t | TRAP_ENTRY  | PC: 0x%08h, Cause: %0d, Jump to: 0x%08h",
+                      $time, u_dut.u_csr.trap_pc, u_dut.u_csr.mcause, u_dut.u_csr.mtvec_out);
+        end
+
+        // 监控异常返回
+        if (u_dut.u_csr.is_mret) begin
+            $fdisplay(trace_file, "%9t | TRAP_MRET   | Return to: 0x%08h",
+                      $time, u_dut.u_csr.mepc_out);
+        end
+
+        // 监控分支预测纠错冲刷
+        if (u_dut.mispredict) begin
+            $fdisplay(trace_file, "%9t | MISPREDICT  | Flush Triggered, Redirect to: 0x%08h",
+                      $time, u_dut.u_if_stage.correct_pc);
+        end
     end
 end
 
